@@ -117,6 +117,14 @@ label.l{display:block;font:700 13px 'Barlow Condensed';letter-spacing:.12em;text
 .tw td:last-child{padding-top:10px}.tw td:last-child .sm{width:100%}
 .tabs input{width:100%}
 .top{flex-direction:column}.top .btn{width:100%}
+.cols{grid-template-columns:1fr !important;gap:14px}
+input,select,textarea{font-size:16px}
+.ttl h1{word-break:break-word}.ttl{max-width:100%}
+.chk{gap:10px;padding:10px 0}.chk>span{min-width:0;word-break:break-word}.chk .sm{padding:10px 22px;flex-shrink:0}
+.pn{padding:16px}.pn h2{font-size:21px}
+.dec div{padding:4px 16px 18px}.dbtn .btn{padding:16px 0;font-size:20px}
+.crumb{font-size:12px}
+.pdf{height:60vh}
 }
 </style></head><body><div id="root"></div>
 <script>
@@ -331,7 +339,7 @@ const ck=()=>{if(xv.scrollTop+xv.clientHeight>=xv.scrollHeight-20){seen[cur]=1;i
 const show=k=>{cur=k;xv.innerHTML=XLSX.utils.sheet_to_html(wb.Sheets[N[k]],{header:'',footer:''});xv.querySelectorAll('td').forEach(td=>td.style.cssText='border:1px solid #ccc;padding:2px 6px;font-size:12px');xv.scrollTop=0;ck()};
 box.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>show(+b.dataset.k));xv.onscroll=ck;show(0)}
 else{await loadPdfJs();const pdf=await pdfjsLib.getDocument(u).promise;box.innerHTML='<div id="pv" style="max-height:70vh;overflow:auto;background:#222;padding:8px"></div>'+dl;const pv=$('#pv');
-for(let n=1;n<=pdf.numPages;n++){const pg=await pdf.getPage(n),vp=pg.getViewport({scale:1.4}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;c.style.cssText='max-width:100%;display:block;margin:0 auto 8px';pv.appendChild(c);await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise}
+for(let n=1;n<=pdf.numPages;n++){const pg=await pdf.getPage(n),w0=pg.getViewport({scale:1}).width,dpr=Math.min(window.devicePixelRatio||1,2),vp=pg.getViewport({scale:Math.max(pv.clientWidth-16,280)/w0*dpr}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;c.style.cssText='width:100%;height:auto;display:block;margin:0 auto 8px';pv.appendChild(c);await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise}
 const se=document.createElement('div');se.style.height='2px';pv.appendChild(se);new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting))fileDone(i)},{root:pv}).observe(se);
 const ck=()=>{if(pv.scrollTop+pv.clientHeight>=pv.scrollHeight-40)fileDone(i)};pv.onscroll=ck;ck()}
 box.insertAdjacentHTML('beforeend','<p class="foot" id="fh" style="padding:0 16px 12px">'+(S.rd[i]?'✔ Leitura deste arquivo concluída.':{pdf:'Role até o fim do PDF para concluir a leitura.',video:'Assista ao vídeo até o final para concluir a leitura.',excel:'Abra cada aba e role até o fim.',imagem:''}[f.tipo])+'</p>');
