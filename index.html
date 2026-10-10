@@ -95,6 +95,29 @@ label.l{display:block;font:700 13px 'Barlow Condensed';letter-spacing:.12em;text
 .toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--yl);color:#111;padding:12px 26px;font-weight:600;z-index:9}
 .mini{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}.mini button{background:#1d1d1d;border:1px solid #3a3a3a;padding:8px 14px;font-size:13px}
 @media(max-width:820px){.app{flex-direction:column}.sb{width:100%;flex-direction:row;align-items:center;flex-wrap:wrap;padding:12px 14px;gap:8px}.logo{margin:0;font-size:24px}.nav{display:flex;flex:1;overflow-x:auto}.nav button{width:auto;white-space:nowrap;margin:0}.me{margin:0}.main{padding:22px 16px}.cols{grid-template-columns:1fr}.stats{gap:30px}.tabs input{width:100%;margin:0}.vtop{padding:14px 16px}.ttl h1{font-size:28px;padding-right:26px}.row2{grid-template-columns:1fr}.pdf{height:380px}.vid{height:240px}}
+.vcs{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px}
+.vc{background:var(--card);border:1px solid var(--bd);padding:16px}
+.vc1 b{display:block;font-size:18px;line-height:1.25;word-break:break-word}.vc1 small{display:block;margin-top:2px}
+.vc2{display:flex;justify-content:space-between;gap:10px;margin:14px 0;font-size:12px;color:var(--mu);text-transform:uppercase;letter-spacing:.06em}
+.vc2 b{display:block;font-size:16px;color:var(--tx);letter-spacing:0;text-transform:none;margin-top:2px}.vc2 b.y{color:var(--yl)}.vc2 b.pk{color:#ff8a8a}
+.vcb{width:100%}
+.bellw{position:fixed;top:12px;right:16px;z-index:60}
+.bellp{position:absolute;right:0;top:38px;width:340px;max-width:92vw;max-height:60vh;overflow:auto;background:#1b1e26;color:#eee;border:1px solid #333;border-radius:10px;padding:8px}
+@media(max-width:820px){
+.bellw{top:auto;bottom:calc(16px + env(safe-area-inset-bottom,0px));right:14px}
+.bellw>.sm{background:#1b1e26;border-radius:22px;padding:12px 16px;font-size:18px;box-shadow:0 2px 10px #000a}
+.bellp{top:auto;bottom:56px;width:min(340px,calc(100vw - 28px));max-height:65vh}
+.ttl h1{font-size:28px;padding:10px 30px 10px 14px}.ttl:after{height:44px}
+.vtop{flex-wrap:wrap;gap:8px;padding:12px 16px}.vtop .y{margin-left:14px}
+.tw{background:none;border:0;overflow:visible}
+.tw table{min-width:0;display:block}.tw tbody{display:block}
+.tw tr:has(>th){display:none}
+.tw tr{display:block;background:var(--card);border:1px solid var(--bd);margin-bottom:12px;padding:12px 14px}
+.tw td{display:block;border:0;padding:4px 0}
+.tw td:last-child{padding-top:10px}.tw td:last-child .sm{width:100%}
+.tabs input{width:100%}
+.top{flex-direction:column}.top .btn{width:100%}
+}
 </style></head><body><div id="root"></div>
 <script>
 // ===== CONFIGURAÇÃO DO SUPABASE =====
@@ -284,7 +307,12 @@ async function loadVal(){const{data,error}=await sb.from('documentos').select('i
 if(error)toast('Não foi possível carregar os documentos');
 S.vd=(data||[]).map(d=>({...d,me:(d.participantes||[])[0]||{},fs:(d.documento_arquivos||[]).sort((a,b)=>a.ordem-b.ordem)}))}
 function vbar(){return `<div class="vtop"><div style="display:flex;align-items:center"><div class="logo d" style="margin:0;font-size:26px"><i>✓</i>AVAL</div><a class="y" style="cursor:pointer" onclick="go('vlist')">Meus documentos</a></div><div>${esc(U.val.n)} <span class="av" style="display:inline-grid;vertical-align:middle;margin-left:8px">${U.val.i}</span> <a class="mu" style="cursor:pointer;margin-left:10px" onclick="logout()">Sair</a></div></div>`}
-function vlistR(){const L=S.vd||[];const pend=L.filter(d=>d.status==='em_validacao'&&!d.me.decisao),h=x=>(new Date(x.prazo)-Date.now())/36e5,u2=pend.filter(d=>h(d)<=2).length,u24=pend.filter(d=>h(d)<=24).length;const al=u2?`<p class="foot" style="color:#ff8a8a">⚠ ${u2} pedido(s) vencem em menos de 2 horas.</p>`:u24?`<p class="foot" style="color:#ffd24a">⚠ ${u24} pedido(s) vencem em menos de 24 horas.</p>`:'';return vbar()+`<div class="main" style="max-width:1100px;margin:auto">${head('Meus documentos','Pedidos aguardando a sua decisão')}${al}<div class="tw"><table><tr><th>Documento<th>Prazo<th>Arquivos<th></tr>${L.map(d=>{const m=d.me,st=m.decisao?`<span class="tag ${m.decisao==='aprovou'?'wh':'rd'}">${m.decisao==='aprovou'?'Aprovou':'Reprovou'}</span>`:d.status!=='em_validacao'?'<span class="tag gr">Encerrado</span>':`<button class="sm r" onclick="openVal('${d.id}')">Validar</button>`;return `<tr><td><b>${esc(d.titulo)}</b><small class="mu">${esc(d.codigo)}</small><td>${fd(d.prazo)}<td>${d.fs.length}<td>${st}</tr>`}).join('')||'<tr><td colspan="4" class="mu">Nenhum documento para você.</tr>'}</table></div></div>`}
+function vlistR(){const L=S.vd||[],h=x=>(new Date(x.prazo)-Date.now())/36e5,rest=d=>{const ms=new Date(d.prazo)-Date.now();return ms<36e5?Math.max(1,Math.ceil(ms/6e4))+' min':left(d)};
+const pend=L.filter(d=>d.status==='em_validacao'&&!d.me.decisao&&h(d)>0).sort((a,b)=>new Date(a.prazo)-new Date(b.prazo));
+const u2=pend.filter(d=>h(d)<=2).length,u24=pend.filter(d=>h(d)<=24).length;
+const al=u2?`<p class="foot" style="color:#ff8a8a">⚠ ${u2} pedido(s) vencem em menos de 2 horas.</p>`:u24?`<p class="foot" style="color:#ffd24a">⚠ ${u24} pedido(s) vencem em menos de 24 horas.</p>`:'';
+const cards=pend.map(d=>{const x=h(d),cor=x<=2?'pk':x<=24?'y':'';return `<div class="vc"><div class="vc1"><b>${esc(d.titulo)}</b><small class="mu">${esc(d.codigo)}</small></div><div class="vc2"><span>Prazo<b>${fd(d.prazo)}</b></span><span>Restam<b class="${cor}">${rest(d)}</b></span><span>Arquivos<b>${d.fs.length}</b></span></div><button class="btn vcb" onclick="openVal('${d.id}')">Validar</button></div>`}).join('')||'<div class="vc mu">Nenhum pedido aguardando a sua decisão.</div>';
+return vbar()+`<div class="main" style="max-width:1100px;margin:auto">${head('Meus documentos','Pedidos aguardando a sua decisão')}${al}<p style="margin:0 0 14px"><button class="sm" onclick="bump()">↻ Atualizar</button></p><div class="vcs">${cards}</div></div>`}
 function openVal(id){S.vdoc=S.vd.find(x=>x.id===id);S.rd={};S.v='vdoc';render()}
 function vdocV(){const d=S.vdoc,m=d.me,TL={pdf:'PDF',excel:'Excel',video:'Vídeo',imagem:'Foto'},ok=!!m.leitura_concluida_em,dn=!!m.decisao||d.status!=='em_validacao';
 const lk=dn?(m.decisao?'Decisão já registrada: '+(m.decisao==='aprovou'?'Aprovou':'Reprovou'):'Pedido encerrado.'):ok?'✔ Leitura concluída. Aprovação liberada.':'🔒 Abra e leia todos os arquivos para liberar a aprovação.';
@@ -326,7 +354,7 @@ let rt=null,rtT=0;
 const NI={nova:'📄',lembrete:'⏰',critico:'🚨'};
 function renderBell(){let b=document.getElementById('bellbox');if(!b){b=document.createElement('div');b.id='bellbox';document.body.appendChild(b)}
 if(!S.u||S.demo){b.innerHTML='';return}const L=S.nt||[],n=L.filter(x=>!x.lida_em).length,perm=('Notification' in window)?Notification.permission:'denied';
-b.innerHTML=`<div style="position:fixed;top:12px;right:16px;z-index:60"><button class="sm" onclick="S.np=!S.np;renderBell()">🔔${n?` <b style="background:#e5484d;color:#fff;border-radius:9px;padding:0 6px">${n}</b>`:''}</button>${S.np?`<div style="position:absolute;right:0;top:38px;width:340px;max-width:92vw;max-height:60vh;overflow:auto;background:#1b1e26;color:#eee;border:1px solid #333;border-radius:10px;padding:8px"><div style="display:flex;justify-content:space-between;gap:8px;padding:4px 6px"><b>Notificações</b>${n?`<a style="cursor:pointer;text-decoration:underline" onclick="readAllNt()">Marcar todas como lidas</a>`:''}</div>${pushUi()}${L.map(x=>`<div onclick="openNt(${x.id})" style="cursor:pointer;padding:8px 6px;border-top:1px solid #333;${x.lida_em?'opacity:.55':''}"><b>${NI[x.tipo]||''} ${esc(x.titulo)}</b><small style="display:block">${esc(x.mensagem)}</small><small style="opacity:.7">${fd(x.criado_em)}</small></div>`).join('')||'<p style="padding:8px 6px;margin:0;opacity:.7">Nenhuma notificação.</p>'}</div>`:''}</div>`}
+b.innerHTML=`<div class="bellw"><button class="sm" onclick="S.np=!S.np;renderBell()">🔔${n?` <b style="background:#e5484d;color:#fff;border-radius:9px;padding:0 6px">${n}</b>`:''}</button>${S.np?`<div class="bellp"><div style="display:flex;justify-content:space-between;gap:8px;padding:4px 6px"><b>Notificações</b>${n?`<a style="cursor:pointer;text-decoration:underline" onclick="readAllNt()">Marcar todas como lidas</a>`:''}</div>${pushUi()}${L.map(x=>`<div onclick="openNt(${x.id})" style="cursor:pointer;padding:8px 6px;border-top:1px solid #333;${x.lida_em?'opacity:.55':''}"><b>${NI[x.tipo]||''} ${esc(x.titulo)}</b><small style="display:block">${esc(x.mensagem)}</small><small style="opacity:.7">${fd(x.criado_em)}</small></div>`).join('')||'<p style="padding:8px 6px;margin:0;opacity:.7">Nenhuma notificação.</p>'}</div>`:''}</div>`}
 async function loadNotifs(){if(S.demo||!S.u)return;const{data}=await sb.from('notificacoes').select('*').order('criado_em',{ascending:false}).limit(50);const old=new Set((S.nt||[]).map(x=>x.id));S.nt=data||[];if(S.ntInit)S.nt.filter(x=>!old.has(x.id)&&!x.lida_em).forEach(alertNt);S.ntInit=1;renderBell()}
 function alertNt(x){toast(NI[x.tipo]+' '+x.titulo+': '+x.mensagem);try{if(S.push!=='on'&&'Notification' in window&&Notification.permission==='granted')new Notification(x.titulo,{body:x.mensagem})}catch(_){}}
 async function readAllNt(){await sb.from('notificacoes').update({lida_em:new Date().toISOString()}).is('lida_em',null);await loadNotifs()}
@@ -373,5 +401,7 @@ if(st==='negado')return `<p style="${p}">Avisos bloqueados. Libere as notificaç
 if(st==='on')return `<p style="${p}">✅ Avisos ativos neste aparelho · <a style="${a}" onclick="desativarPush()">desativar</a></p>`;
 return `<p style="${p}"><a style="${a}" onclick="ativarPush()">🔔 Ativar avisos neste aparelho</a></p>`}
 if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+let vtm;function voltou(){clearTimeout(vtm);vtm=setTimeout(()=>{if(document.hidden||!S.u||S.demo)return;bump();loadNotifs()},300)}
+document.addEventListener('visibilitychange',voltou);window.addEventListener('focus',voltou);window.addEventListener('pageshow',voltou);
 sb.auth.getSession().then(({data})=>data.session?enter():render());
 </script></body></html>
