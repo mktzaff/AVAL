@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Aval · Validação de documentos</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Aval">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Barlow:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#0d0d0d;--sb:#080808;--card:#1a1a1a;--bd:#2b2b2b;--tx:#f2f2f2;--mu:#9a9a9a;--rd:#e3232b;--rd2:#d91a20;--yl:#ffd51f;--ok:#fff;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+*,*:before,*:after{box-sizing:inherit}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;min-height:100%;background:var(--bg);color:var(--tx);font:400 15px/1.4 Barlow,system-ui,sans-serif}
+h1,h2,.d{font-family:'Barlow Condensed','Arial Narrow',Impact,sans-serif;text-transform:uppercase;font-weight:800;letter-spacing:.02em}
+button{font:inherit;cursor:pointer;color:inherit}
+.app{display:flex;min-height:100vh}
+.sb{width:238px;background:var(--sb);border-right:1px solid var(--bd);padding:28px 18px;display:flex;flex-direction:column;flex-shrink:0}
+.logo{display:flex;align-items:center;gap:14px;font-size:30px;margin-bottom:34px;padding-left:2px}
+.logo i,.mk{display:inline-grid;place-items:center;width:40px;height:26px;background:var(--rd2);clip-path:polygon(22% 0,100% 0,78% 100%,0 100%);color:var(--yl);font-style:normal;font-size:16px}
+.nav button{display:block;width:100%;text-align:left;background:none;border:0;padding:12px 14px;color:var(--mu);font-weight:600;font-size:16px;margin-bottom:6px}
+.nav button.on{background:var(--yl);color:#111;clip-path:polygon(0 0,100% 0,94% 100%,0 100%)}
+.me{margin-top:auto;display:flex;gap:12px;align-items:center}
+.av{background:var(--yl);color:#111;width:44px;height:36px;display:grid;place-items:center;font-family:'Barlow Condensed';font-weight:800;clip-path:polygon(20% 0,100% 0,80% 100%,0 100%);flex-shrink:0}
+.me small{color:var(--mu);display:block;font-size:12px}.me b{display:block}.me a{color:var(--mu);font-size:12px;cursor:pointer;text-decoration:underline}
+.main{flex:1;padding:34px 40px;min-width:0}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap}
+.ttl{display:inline-flex;align-items:center}
+.ttl h1{margin:0;background:var(--rd2);font-size:40px;line-height:1;padding:12px 40px 12px 20px;clip-path:polygon(0 0,100% 0,94% 100%,0 100%)}
+.ttl:after{content:"";width:16px;height:56px;background:var(--yl);transform:skewX(-20deg);margin-left:-6px}
+.sub{color:var(--mu);margin:12px 0 22px}
+.crumb{color:var(--mu);font-size:13px;margin-bottom:12px}
+.btn{border:0;font-family:'Barlow Condensed';text-transform:uppercase;font-weight:800;letter-spacing:.03em;font-size:18px;padding:14px 30px;background:var(--rd);color:#fff;clip-path:polygon(7% 0,100% 0,93% 100%,0 100%)}
+.btn.g{background:#2b2b2b;color:#fff}.btn:disabled{opacity:.45;cursor:not-allowed}
+.sm{background:none;border:1px solid #555;padding:8px 18px;font-weight:600;font-size:14px}
+.sm.r{background:var(--rd);border-color:var(--rd)}
+.stats{display:flex;gap:56px;margin-bottom:22px}
+.stats b{display:block;font:800 56px/1 'Barlow Condensed'}.stats span{font:700 13px 'Barlow Condensed';letter-spacing:.12em;color:var(--mu);text-transform:uppercase}
+.alert{background:#2b1114;padding:14px 18px;margin-bottom:22px;display:flex;gap:14px;align-items:center;color:#f3c9cb}
+.tag{display:inline-block;font:700 13px 'Barlow Condensed';letter-spacing:.1em;text-transform:uppercase;padding:4px 18px;background:var(--yl);color:#111;clip-path:polygon(8% 0,100% 0,92% 100%,0 100%);white-space:nowrap}
+.tag.rd{background:var(--rd);color:#fff}.tag.wh{background:#f4f4f4}.tag.gr{background:#333;color:#ccc}
+.tabs{display:flex;gap:6px;margin-bottom:20px;align-items:center;flex-wrap:wrap}
+.tabs button{border:0;background:#1d1d1d;color:var(--mu);padding:10px 24px;font-weight:600;clip-path:polygon(8% 0,100% 0,92% 100%,0 100%)}
+.tabs button.on{background:var(--yl);color:#111}
+.tabs input{margin-left:auto}
+input,select,textarea{background:#131313;border:1px solid #3a3a3a;color:var(--tx);padding:12px 14px;font:inherit;width:100%;border-radius:0}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--yl);outline-offset:1px}
+.tabs input{width:267px}
+.tw{overflow-x:auto;background:var(--card);border:1px solid var(--bd)}
+table{width:100%;border-collapse:collapse;min-width:760px}
+th{font:700 13px 'Barlow Condensed';letter-spacing:.12em;text-transform:uppercase;color:var(--mu);text-align:left;padding:16px 14px;background:#131313}
+td{padding:14px;border-top:1px solid var(--bd);vertical-align:middle}
+td b{display:block;font-size:17px}td small{color:var(--mu);font-size:12px}
+.lim{font:800 15px 'Barlow Condensed';letter-spacing:.04em;display:block}.y{color:var(--yl)}.pk{color:#ff8a8a}.mu{color:var(--mu)}
+.bar{display:flex;gap:3px}.bar i{width:7px;height:16px;background:var(--yl);transform:skewX(-18deg)}.bar i.o{background:#333}
+.foot{color:var(--mu);font-size:13px;margin-top:18px}
+.ms span{display:inline-block;font:800 12px 'Barlow Condensed';padding:3px 10px;background:#333;color:#888;margin-right:6px;clip-path:polygon(15% 0,100% 0,85% 100%,0 100%)}.ms span.on{background:var(--yl);color:#111}
+.link{background:none;border:0;border-bottom:1px solid #666;padding:0;margin-right:12px;font-weight:600;font-size:14px}.link.y{color:var(--yl);border-color:var(--yl)}.link.pk{color:#ff8a8a;border-color:#ff8a8a}
+.cols{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr);gap:20px;align-items:start}
+.pn{background:var(--card);padding:22px;margin-bottom:20px;clip-path:polygon(0 0,calc(100% - 18px) 0,100% 18px,100% 100%,0 100%)}
+.pn h2{margin:0 0 16px;font-size:24px;display:flex;gap:12px;align-items:center}
+.pn h2 em{font-style:normal;background:var(--yl);color:#111;width:30px;text-align:center;font-size:17px;clip-path:polygon(25% 0,100% 0,75% 100%,0 100%)}
+label.l{display:block;font:700 13px 'Barlow Condensed';letter-spacing:.12em;text-transform:uppercase;color:var(--mu);margin:14px 0 6px}
+.drop{border:2px dashed #555;padding:34px 16px;text-align:center;cursor:pointer;background:var(--bg)}.drop small{display:block;color:var(--mu)}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.chk{display:flex;gap:12px;align-items:flex-start;padding:7px 0;cursor:pointer}.chk input{width:20px;height:20px;accent-color:var(--yl);padding:0;flex-shrink:0;margin-top:2px}
+.chk small{display:block;color:var(--mu);font-size:12px}
+.opt{display:block;border:1px solid var(--bd);background:#151515;padding:14px 16px;margin-bottom:12px;cursor:pointer}
+.opt.on{border-color:var(--yl);background:#2d2a1b}.opt input{width:auto;accent-color:var(--yl);margin-right:10px}.opt small{display:block;color:var(--mu);margin-left:26px}
+.how{border-top:3px solid var(--yl);background:var(--card);padding:18px}.how h2{color:var(--yl);margin:0 0 12px;font-size:20px}.how p{margin:0 0 10px;padding-left:14px;position:relative}.how p:before{content:"›";position:absolute;left:0;color:var(--yl)}
+.acts{display:flex;justify-content:flex-end;gap:12px;margin-top:6px}
+.vtop{display:flex;justify-content:space-between;align-items:center;padding:16px 40px;background:var(--sb);border-bottom:1px solid var(--bd)}
+.vtop .y{font-weight:600;margin-left:26px}
+.big{font:800 48px/1 'Barlow Condensed';color:var(--yl);text-align:right}.big small{display:block;font-size:13px;letter-spacing:.1em;color:var(--mu)}
+.vw{background:var(--card)}.vh{display:flex;justify-content:space-between;align-items:center;padding:12px 16px;gap:8px}
+.prog{height:4px;background:#333}.prog i{display:block;height:100%;background:var(--yl);width:0}
+.pdf{position:relative;height:480px;overflow:auto;background:#0a0a0a;padding:24px 0}
+.pg{background:#fff;width:min(80%,470px);height:600px;margin:0 auto 24px;padding:36px}
+.pg s{display:block;height:11px;background:#e2e2e2;border-radius:3px;margin-bottom:17px;text-decoration:none}
+.vid{background:#000;height:380px;display:grid;place-items:center;color:var(--mu);position:relative}
+.pl{width:84px;height:84px;border-radius:50%;background:#262626;border:0;font-size:30px}
+.dec{background:var(--card)}.dec h2{background:var(--yl);color:#111;margin:0;padding:14px 20px;font-size:22px;clip-path:polygon(0 0,calc(100% - 16px) 0,100% 16px,100% 100%,0 100%)}
+.dec div{padding:6px 20px 20px}.lock{background:#2d2a1b;color:var(--yl);padding:12px 14px;margin:14px 0;font-size:14px}
+.dbtn{display:flex;gap:10px}.dbtn .btn{flex:1;padding:16px 0}
+.rep{background:#3a1519;color:#ff8a8a}
+.login{min-height:100vh;display:grid;grid-template-rows:55vh auto}
+.lh{background:var(--rd2);padding:12vh 8vw 0;clip-path:polygon(0 0,100% 0,100% 82%,0 100%);position:relative}
+.lh:after{content:"";position:absolute;left:0;right:0;bottom:-1px;height:100%;background:var(--yl);clip-path:polygon(0 100%,100% 81%,100% 85%,0 104%);}
+.lh .logo{font-size:84px;gap:18px;margin:0}.lh .logo i{width:130px;height:90px;background:var(--yl);color:var(--rd2);font-size:50px}
+.lh h2{font-size:38px;margin:20px 0}
+.lf{padding:30px 8vw;max-width:560px}
+.toast{position:fixed;left:50%;bottom:calc(24px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--yl);color:#111;padding:12px 26px;font-weight:600;z-index:9}
+.mini{margin-top:18px;display:flex;gap:8px;flex-wrap:wrap}.mini button{background:#1d1d1d;border:1px solid #3a3a3a;padding:8px 14px;font-size:13px}
+@media(max-width:820px){.app{flex-direction:column}.sb{width:100%;flex-direction:row;align-items:center;flex-wrap:wrap;padding:12px 14px;gap:8px}.logo{margin:0;font-size:24px}.nav{display:flex;flex:1;overflow-x:auto}.nav button{width:auto;white-space:nowrap;margin:0}.me{margin:0}.main{padding:22px 16px}.cols{grid-template-columns:1fr}.stats{gap:30px}.tabs input{width:100%;margin:0}.vtop{padding:14px 16px}.ttl h1{font-size:28px;padding-right:26px}.row2{grid-template-columns:1fr}.pdf{height:380px}.vid{height:240px}}
+</style></head><body><div id="root"></div>
+<script>
+// ===== CONFIGURAÇÃO DO SUPABASE =====
+const SUPABASE_URL='https://jzchbklpyohgoeyxtdbl.supabase.co';
+const SUPABASE_KEY='sb_publishable_eIeVweLkt_DAc7K17_mSbg_ZRHWSqhT'; // chave PÚBLICA. Nunca use a service_role aqui.
+const VAPID_PUBLIC='BKaC6zrK-02sHd-xBbFvefAdXnwFySaiQ9ZcuWllMDbME50IfeJk53neiDQ00YBDMYltG7MilJVfOozEIEH33yA'; // chave PÚBLICA de avisos push (a privada fica só nos Secrets do Supabase)
+const MODO_DEMO=false; // true = mostra botões de demonstração (sem senha, dados de exemplo). Coloque false antes de publicar.
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const U={master:{n:'Admin Master',r:'Acesso total',i:'AM'},juliano:{n:'Juliano',r:'Administrador',i:'JU'},adm2:{n:'Administrador 2',r:'Administrador',i:'A2'},val:{n:'Validador 1',r:'Validador',i:'V1'}};
+let S={u:null,step:'login',me:null,v:'docs',tab:'all',q:'',toast:'',rules:{dest:'out',a2:true,a3:false,master:'opt',vals:'all'},decided:{}};
+let docs=[
+{id:'DOC-0041',t:'Tabela de preços, semana 41',o:'Juliano',d:'12/10, 18:00',l:'2D 14H',v:6,vt:8,m:1,s:'val'},
+{id:'DOC-0039',t:'Encarte de ofertas',o:'Administrador 2',d:'08/10, 12:00',l:'ENCERRADO',v:5,vt:7,m:0,s:'exp'},
+{id:'DOC-0036',t:'Tabela de preços, semana 40',o:'Juliano',d:'05/10, 18:00',l:'CONCLUÍDO',v:8,vt:8,m:2,s:'ok'}];
+let users=[['Admin Master (você)','ADMIN MASTER','Todos','Agora',''],['Juliano','ADMINISTRADOR','12 documentos','Hoje, 09:14','a'],['Administrador 2','ADMINISTRADOR','7 documentos','Ontem, 17:40','a'],['Validador 1','VALIDADOR','—','Hoje, 08:02','v'],['Master 1','MASTER','—','Hoje, 10:30','v']];
+const $=s=>document.querySelector(s),h=(s,...a)=>s.map((x,i)=>x+(a[i]??'')).join('');
+function toast(m){let t=document.querySelector('.toast');if(t)t.remove();t=document.createElement('div');t.className='toast';t.textContent=m;document.body.appendChild(t);setTimeout(()=>t.remove(),2800)}
+function go(v){S.v=v;render()}
+function login(k){S.u=k;S.v=k==='val'?'vlist':k==='adm2'?'recv':'docs';S.tab=k==='master'?'all':'mine';render()}
+function bar(a,b){let r='';for(let i=0;i<b;i++)r+=`<i class="${i<a?'':'o'}"></i>`;return `<div class="bar">${r}</div><small>${a} de ${b}</small>`}
+const stTag={rep:'<span class="tag rd">Reprovado</span>',val:'<span class="tag">Em validação</span>',exp:'<span class="tag rd">Expirado</span>',ok:'<span class="tag wh">Aprovado</span>'};
+function nav(){const k=S.u,it=k==='master'?[['docs','Documentos'],['users','Usuários'],['aud','Auditoria'],['cfg','Configurações']]:k==='juliano'?[['docs','Documentos']]:[['docs','Documentos'],['recv','Recebidos']];if(k==='adm2')it[0]=['docs','Documentos'];
+return `<aside class="sb"><div class="logo d"><i>✓</i>AVAL</div><nav class="nav">${it.map(([a,b])=>`<button class="${S.v===a||(a==='users'&&S.v==='rules')||(a==='docs'&&(S.v==='new'||S.v==='doc'))?'on':''}" onclick="go('${a}')">${b}</button>`).join('')}</nav><div class="me"><div class="av">${U[k].i}</div><div><b>${esc(U[k].n)}</b><small>${esc(U[k].r)}</small> <a onclick="logout()">Sair</a></div></div></aside>`}
+function head(t,sub,btn){return `<div class="top"><div><div class="ttl"><h1>${t}</h1></div><p class="sub">${sub}</p></div>${btn||''}</div>`}
+function docsV(){const m=S.u==='master',list=docs.filter(d=>(m&&S.tab==='all'||d.o===U[S.u].n||(m&&d.o==='Juliano'&&false))&&d.t.toLowerCase().includes(S.q.toLowerCase()));
+const c=s=>docs.filter(d=>d.s===s&&(m||d.o===U[S.u].n)).length;
+return head('Documentos','Prazos, decisões e andamento','<button class="btn" onclick="go(\'new\')">+ Novo documento</button>')+
+`<div class="stats"><div><b class="y">${c('val')}</b><span>Em validação</span></div><div><b class="pk">${c('exp')}</b><span>Expirado</span></div><div><b>${c('ok')}</b><span>Aprovado</span></div></div>`+
+(docs.some(d=>d.s==='exp')&&m?`<div class="alert"><span class="tag">Ação</span>${docs.filter(d=>d.s==='exp').length} documento expirou sem a aprovação dos 2 Masters.</div>`:'')+
+`<div class="tabs">${m?`<button class="${S.tab==='mine'?'on':''}" onclick="S.tab='mine';render()">Meus documentos</button><button class="${S.tab==='all'?'on':''}" onclick="S.tab='all';render()">Todos os administradores</button>`:''}<input placeholder="Buscar documento" value="${esc(S.q)}" oninput="S.q=this.value;render(true)" id="q"></div>
+<div class="tw"><table><tr><th>Documento<th>Prazo<th>Validadores<th>Masters<th>Situação<th></tr>${list.map(d=>`<tr><td><b>${esc(d.t)}</b><small>${esc(d.id)} · ${esc(d.o)}</small><td>${d.d}<span class="lim ${d.s==='val'?'y':d.s==='exp'?'pk':'mu'}">${d.l}</span><td>${bar(d.v,d.vt)}<td class="ms"><span class="${d.m>0?'on':''}">M1</span><span class="${d.m>1?'on':''}">M2</span><td>${stTag[d.s]}<td>${d.s==='exp'?`<button class="sm r" onclick="resolve('${d.id}')">Resolver</button>`:d.s==='ok'?`<button class="sm" onclick="toast('Download: disponível na etapa 3')">PDF de auditoria</button>`:`<button class="sm" onclick="openDoc('${d.id}')">Abrir</button>`}</tr>`).join('')||'<tr><td colspan=6 class="mu">Nenhum documento encontrado.</tr>'}</table></div>
+<p class="foot">${m?'Como Admin Master, você vê e ajusta os documentos de todos os administradores. ':''}Histórico e PDFs de auditoria são apagados 30 dias após a conclusão.</p>`}
+function resolve(id){if(!S.demo)return toast('Reabrir prazo: disponível na etapa 3');const d=docs.find(x=>x.id===id);d.s='val';d.l='1D 00H';d.m=0;render();toast('Prazo reaberto por 24 h para '+id+' (demonstração)')}
+function usersV(){const f=S.tab;const L=users.filter(u=>f==='all'||f==='mine'||(f==='A'&&u[4]==='a')||(f==='V'&&u[1]==='VALIDADOR')||(f==='M'&&u[1]==='MASTER'));
+const t=(k,n)=>`<button class="${S.ut===k?'on':''}" onclick="S.ut='${k}';render()">${n}</button>`;S.ut=S.ut||'all';
+const F=users.filter(u=>S.ut==='all'||(S.ut==='A'&&u[1]==='ADMINISTRADOR')||(S.ut==='V'&&u[1]==='VALIDADOR')||(S.ut==='M'&&u[1]==='MASTER'));
+const cls={'ADMIN MASTER':'','ADMINISTRADOR':'wh','VALIDADOR':'gr','MASTER':'rd'};
+return head('Usuários','Quem acessa o Aval e com que perfil','<button class="btn" onclick="toast(\'Criar usuário: disponível na etapa 3\')">+ Novo usuário</button>')+`<div class="tabs">${t('all','Todos')}${t('A','Administradores')}${t('V','Validadores')}${t('M','Masters')}</div>
+<div class="tw"><table><tr><th>Nome<th>Perfil<th>Documentos<th>Último acesso<th></tr>${F.map(u=>`<tr><td><b>${esc(u[0])}</b><td><span class="tag ${cls[u[1]]}">${u[1]}</span><td>${u[2]}<td class="mu">${u[3]}<td>${u[4]===''?'—':(u[4]==='a'?`<button class="link y" onclick="S.v='rules';render()">Regras</button>`:'')+`<button class="link" onclick="toast('Redefinir senha: disponível na etapa 3')">Redefinir senha</button><button class="link pk" onclick="toast('Desativar: disponível na etapa 3')">Desativar</button>`}</tr>`).join('')}</table></div>
+<p class="foot">Somente o Admin Master cria administradores, redefine senhas e vê os documentos de todos. Cada administrador vê apenas os seus.</p>`}
+function rulesV(){const r=S.rules;const o=(g,v,t,d,extra)=>`<label class="opt ${r[g]===v?'on':''}"><input type="radio" name="${g}" ${r[g]===v?'checked':''} onchange="S.rules.${g}='${v}';render()"><b>${t}</b><small>${d}</small>${extra||''}</label>`;
+const ex=r.dest==='out'?`<div style="margin:12px 0 0 26px"><label class="l" style="margin-top:0">Destinos permitidos</label>${[['a2','Administrador 2'],['a3','Administrador 3']].map(([k,n])=>`<label class="chk" onclick="event.stopPropagation()"><input type="checkbox" ${r[k]?'checked':''} onchange="S.rules.${k}=this.checked;render()">${n}</label>`).join('')}</div>`:'';
+const dst=[r.a2&&'Administrador 2',r.a3&&'Administrador 3'].filter(Boolean).join(' ou ');
+return `<div class="crumb">Usuários / Juliano</div>`+head('Juliano','Administrador · regras do perfil')+`<div class="cols"><div><div class="pn"><h2><em>1</em>Envio do resultado</h2>${o('dest','out','Pode entregar o resultado a outro administrador','Ele escolhe, a cada pedido, o destino entre os permitidos.',ex)}${o('dest','none','Sem retorno a outro administrador','O PDF de auditoria e o arquivo ficam só com ele, que enviou.')}</div>
+<div class="pn"><h2><em>2</em>Validação Master</h2>${o('master','req','Obrigatória (travada)','Todo pedido exige Master 1 e Master 2. Ele não pode mudar.')}${o('master','opt','Opcional','Ele escolhe, a cada pedido, se exige validação Master.')}${o('master','off','Dispensada (travada)','Pedidos nunca exigem validação Master. Ele não pode mudar.')}</div>
+<div class="pn"><h2><em>3</em>Validadores que pode escolher</h2>${o('vals','all','Todos os validadores','Escolhe livremente entre os 10.')}${o('vals','sel','Somente validadores selecionados','Você define a lista permitida.')}</div>
+<div class="acts"><button class="btn g" onclick="go('users')">Cancelar</button><button class="btn" onclick="toast('Regras salvas. Valem para os próximos pedidos.');S.v='users';render()">Salvar regras</button></div></div>
+<div><div class="how"><h2>Como fica para o Juliano</h2><p>${r.dest==='out'?(dst?`Pode entregar o resultado a ${dst}, escolhido a cada pedido.`:'Pode entregar o resultado, mas nenhum destino foi liberado.'):'O resultado fica só com ele, sem retorno a outro administrador.'}</p><p>${{req:'Todo pedido exige validação Master. Ele não pode mudar.',opt:'Escolhe a cada pedido se exige validação Master.',off:'Pedidos nunca exigem validação Master.'}[r.master]}</p><p>${r.vals==='all'?'Escolhe entre <b>todos os validadores</b>.':'Escolhe somente entre os validadores que você selecionar.'}</p><p>Continua vendo o andamento dos próprios pedidos.</p></div><p class="foot">Somente o Admin Master altera estas regras. A alteração vale para os próximos pedidos; pedidos em andamento mantêm a regra com que foram criados.</p></div></div>`}
+function newV(){S.files=[];const vm=S.vm||'opcional';
+const ck=vm==='obrigatoria'?'checked disabled':vm==='dispensada'?'disabled':'checked';
+const nota={obrigatoria:'Obrigatória no seu perfil.',dispensada:'Dispensada no seu perfil.',opcional:'Opcional no seu perfil.'}[vm];
+const D=S.dest||[];
+return `<div class="crumb">Documentos / Novo documento</div>`+head('Novo documento','Arquivo, prazo e regras do pedido')+`<div class="cols" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)"><div class="pn"><h2><em>1</em>Arquivo</h2><label class="drop" style="display:block" ondragover="event.preventDefault()" ondrop="event.preventDefault();addFiles(event.dataTransfer)"><input type="file" hidden multiple accept=".pdf,.xls,.xlsx,.xlsm,.csv,.mp4,.mov,.webm,.m4v,.jpg,.jpeg,.png" onchange="addFiles(this)"><b>Arraste os arquivos ou clique para escolher</b><small>PDF, Excel, vídeo ou foto (JPG, PNG)</small></label><div id="fl"></div><h2 style="margin-top:26px"><em>2</em>Identificação e prazo</h2><label class="l">Título</label><input id="nt"><div class="row2"><div><label class="l">Data limite</label><input type="date" id="nd"></div><div><label class="l">Horário</label><input type="time" id="nh" value="18:00"></div></div><div class="row2"><div><label class="l">Lembrar a cada (minutos)</label><input type="number" id="nl" min="0" max="10080" value="60"></div><div><label class="l">Tempo crítico (minutos antes)</label><input type="number" id="nc" min="1" max="10080" value="60"></div></div><p class="foot">Quem precisa validar recebe aviso de nova validação, um lembrete no intervalo escolhido (0 = sem lembretes) e um alerta quando faltar o tempo crítico.</p></div>
+<div><div class="pn"><h2><em>3</em>Participantes</h2><label class="l" style="margin-top:0">Validadores</label>${(S.vals||[]).map(v=>`<label class="chk"><input type="checkbox" class="vv" value="${v.id}">${esc(v.nome)}</label>`).join('')||'<p class="mu">Nenhum validador disponível para o seu perfil.</p>'}<hr style="border:0;border-top:1px solid var(--bd)"><label class="l">Masters</label>${(S.masters||[]).map(m=>`<label class="chk"><input type="checkbox" class="mm" value="${m.id}" ${vm==='dispensada'?'disabled':''}>${esc(m.nome)}</label>`).join('')||'<p class="mu">Nenhum Master cadastrado.</p>'}<small class="mu">${nota} Os Masters marcados precisam aprovar.</small></div>
+<div class="pn"><h2><em>4</em>Entrega do resultado</h2><label class="l" style="margin-top:0">Enviar PDF de auditoria e arquivo para</label><select id="ds" ${D.length?'':'disabled'}><option value="">Somente eu</option>${D.map(a=>`<option value="${a.id}">${esc(a.nome)}</option>`).join('')}</select><p class="foot">${D.length?'Destinos permitidos pelo seu perfil.':'Seu perfil não permite entregar o resultado a outro administrador.'}</p></div>
+<div class="acts"><button class="btn g" onclick="go('docs')">Cancelar</button><button class="btn" id="sd" onclick="sendDoc()">Enviar para validação</button></div></div></div>`}
+async function sendDoc(){
+const t=$('#nt').value.trim(),d=$('#nd').value,h=$('#nh').value||'18:00';
+if(!t)return toast('Informe o título do documento');
+if(S.demo){docs.unshift({id:'DOC-00'+(42+docs.length),t,o:U[S.u].n,d:d?fd(d+'T'+h):'—',l:'3D 00H',v:0,vt:document.querySelectorAll('.vv:checked').length,m:0,s:'val'});S.tab=S.u==='master'?'all':'mine';S.v='docs';render();return toast('Documento de demonstração (não foi salvo)')}
+if(!(S.files||[]).length)return toast('Escolha ao menos um arquivo');
+if(S.files.length>20)return toast('No máximo 20 arquivos por pedido.');
+if(!d)return toast('Informe a data limite');
+const nl=parseInt($('#nl').value,10),nc=parseInt($('#nc').value,10);
+if(!(nl>=0&&nl<=10080))return toast('Lembrete: informe de 0 a 10080 minutos (0 = sem lembretes)');
+if(!(nc>=1&&nc<=10080))return toast('Tempo crítico: informe de 1 a 10080 minutos');
+const vs=[...document.querySelectorAll('.vv:checked')].map(x=>x.value),ms=[...document.querySelectorAll('.mm:checked')].map(x=>x.value);
+if(S.vm==='obrigatoria'&&!ms.length)return toast('Escolha ao menos um Master (obrigatório no seu perfil)');
+if(!vs.length&&!ms.length)return toast('Escolha ao menos um validador ou um Master');
+const info=S.files.map(f=>{const ext=(f.name.split('.').pop()||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const tipo=ext==='pdf'?'pdf':['xls','xlsx','xlsm','csv'].includes(ext)?'excel':['mp4','mov','webm','m4v'].includes(ext)?'video':['jpg','jpeg','png'].includes(ext)?'imagem':null;return{f,ext,tipo}});
+const ruim=info.find(x=>!x.tipo);if(ruim)return toast('Arquivo não aceito: '+ruim.f.name+'. Use PDF, Excel, vídeo ou foto.');
+const bt=$('#sd');bt.disabled=true;let subidos=[];
+try{
+const arqs=[];
+for(let i=0;i<info.length;i++){const{f,ext,tipo}=info[i];bt.textContent='Enviando '+(i+1)+' de '+info.length+'…';
+const hash=[...new Uint8Array(await crypto.subtle.digest('SHA-256',await f.arrayBuffer()))].map(b=>b.toString(16).padStart(2,'0')).join('');
+const path=S.me.id+'/'+crypto.randomUUID()+'.'+ext;
+const up=await sb.storage.from('documentos').upload(path,f,{contentType:f.type||undefined});
+if(up.error)throw up.error;subidos.push(path);
+arqs.push({path,nome:f.name,hash,tipo,tamanho:f.size})}
+const{error}=await sb.rpc('criar_documento_arquivos',{p_titulo:t,p_prazo:new Date(d+'T'+h).toISOString(),p_validadores:vs,p_masters:ms,p_lembrete_min:nl,p_critico_min:nc,p_destino:$('#ds').value||null,p_arquivos:arqs});
+if(error)throw error;
+S.files=[];await load();S.tab=S.u==='master'?'all':'mine';S.v='docs';render();toast('Documento enviado para validação');
+}
+catch(e){if(subidos.length)try{await sb.storage.from('documentos').remove(subidos)}catch(_){}bt.disabled=false;bt.textContent='Enviar para validação';toast('Erro: '+(e.message||e))}}
+function recvV(){if(S.demo)return recvDemo();const L=docs.filter(d=>d.dest&&d.dest===S.me.id&&d.s!=='val'),R={ok:['wh','Aprovado'],rep:['rd','Reprovado'],exp:['gr','Expirado']};
+return head('Recebidos','Resultados entregues a você por outros administradores')+`<div class="tw"><table><tr><th>Documento<th>Concluído<th>Resultado<th>Abrir<th>Disponível</tr>${L.map(d=>{const dias=Math.max(0,30-Math.floor((Date.now()-new Date(d.cd))/864e5)),r=R[d.s];return `<tr><td><b>${esc(d.t)}</b><small>Enviado por ${esc(d.o)} · ${esc(d.id)}</small><td>${fd(d.cd)}<td><span class="tag ${r[0]}">${r[1]}</span><td><button class="sm r" onclick="openDoc('${d.id}')">Abrir</button> ${d.ap?`<button class="sm" onclick="openAud('${d.id}')">PDF de auditoria</button>`:`<span class="mu">${d.ape?'PDF apagado':'PDF em preparo'}</span>`}<td><span class="mu">${d.ap?'PDF por '+dias+' dias':'—'}</span></tr>`}).join('')||'<tr><td colspan="5" class="mu">Nenhum resultado recebido ainda.</tr>'}</table></div><p class="foot">Arquivos, PDF de auditoria e histórico são apagados 30 dias após a conclusão. Baixe o que precisar guardar.</p>`}
+function recvDemo(){const rows=[['Tabela de preços, semana 41','DOC-0041','12/10, 14:20',1,'23H RESTANTES','y'],['Tabela de preços, semana 39','DOC-0033','03/10, 11:05',0,'PDF POR 23 DIAS','mu']];
+return head('Recebidos','Resultados entregues a você por outros administradores')+`<div class="tw"><table><tr><th>Documento<th>Concluído<th>Resultado<th>Arquivos<th>Disponível</tr>${rows.map(r=>`<tr><td><b>${r[0]}</b><small>Enviado por Juliano · ${r[1]}</small> ${r[3]?'<span class="tag">Novo</span>':''}<td>${r[2]}<td><span class="tag wh">Aprovado</span><td><button class="sm ${r[3]?'r':''}" onclick="toast('Download: disponível na etapa 3')">PDF de auditoria</button> ${r[3]?`<button class="sm" onclick="toast('Download: disponível na etapa 3')">Arquivo original</button>`:'<span class="mu">Arquivo já apagado</span>'}<td><span class="lim d ${r[5]}" style="font-size:19px">${r[4]}</span></tr>`).join('')}</table></div><p class="foot">O arquivo original fica disponível por tempo limitado após a conclusão. O PDF de auditoria e o histórico são apagados em 30 dias. Baixe o que precisar guardar.</p>`}
+function vlist(){return `<div class="main" style="max-width:1100px;margin:auto">${demo()}${head('Meus documentos','Pedidos aguardando a sua decisão')}<div class="tw"><table><tr><th>Documento<th>Prazo<th>Tipo<th></tr>${[['pdf','Tabela de preços, semana 41','PDF · 3 páginas'],['vid','Vídeo promocional, semana 41','Vídeo · 03:30']].map(x=>`<tr><td><b>${x[1]}</b><td>12/10, 18:00<span class="lim y">2D 14H</span><td>${x[2]}<td>${S.decided[x[0]]?`<span class="tag wh">${S.decided[x[0]]}</span>`:`<button class="sm r" onclick="S.v='${x[0]}';S.read=0;S.pos=0;render()">Validar</button>`}</tr>`).join('')}</table></div></div>`}
+function decision(ok,msg,key){const dn=S.decided[key];return `<div class="dec"><h2>Sua decisão</h2><div><label class="l">Observação (obrigatória ao reprovar)</label><textarea id="ob" rows="5" ${dn?'disabled':''}></textarea><label class="l">Senha de validação</label><input type="password" id="pw" ${dn?'disabled':''}><small class="mu">Confirma sua decisão. Não é a senha de acesso.</small><div class="lock" id="lk">${ok?'✔ Leitura concluída. Aprovação liberada.':'🔒 '+msg}</div><div class="dbtn"><button class="btn rep" ${dn?'disabled':''} onclick="decide('${key}',0)">Reprovar</button><button class="btn ${ok?'':'g'}" id="ap" ${ok&&!dn?'':'disabled'} onclick="decide('${key}',1)">${ok?'':'🔒 '}Aprovar</button></div><p class="foot">Depois de enviada, a decisão não pode ser alterada.</p></div></div>`}
+function decide(k,a){if(!$('#pw').value)return toast('Digite a senha de validação');if(!a&&!$('#ob').value.trim())return toast('Escreva a observação para reprovar');S.decided[k]=a?'Aprovado':'Reprovado';toast('Decisão registrada: '+S.decided[k]);S.v='vlist';render()}
+function vtop(t){return `<div class="vtop"><div style="display:flex;align-items:center"><div class="logo d" style="margin:0;font-size:26px"><i>✓</i>AVAL</div><a class="y" style="cursor:pointer" onclick="go('vlist')">Meus documentos</a></div><div>${esc(U.val.n)} <span class="av" style="display:inline-grid;vertical-align:middle;margin-left:8px">${U.val.i}</span> <a class="mu" style="cursor:pointer;margin-left:10px" onclick="logout()">Sair</a></div></div><div class="main" style="max-width:1200px;margin:auto">${demo()}<div class="top"><div class="ttl"><h1>${t}</h1></div><div class="big">2D 14H<small>RESTANTES · PRAZO 12/10, 18:00</small></div></div><div class="cols" style="margin-top:28px;grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)">`}
+function pdfV(){return vtop('Tabela de preços, semana 41')+`<div class="vw"><div class="vh"><b>tabela-precos-semana-41.pdf</b><span class="mu">Lido: <span id="rd">1</span> de 3</span><button class="sm" onclick="document.querySelector('.pdf').requestFullscreen?.()">Tela cheia</button></div><div class="prog"><i id="pr" style="width:33%"></i></div><div class="pdf" id="pdf" onscroll="pdfScroll()">${[1,2,3].map(()=>`<div class="pg">${'<s style="width:'+[45,100,90,100,85,100,70,100,88,100,76,100,95,60][0]+'%"></s>'}${[100,92,100,85,100,70,100,90,100,78,100,95,64,100,88,100,72,100,90,80].map(w=>`<s style="width:${w}%"></s>`).join('')}</div>`).join('')}</div><p class="foot" style="padding:0 16px 14px;margin:10px 0 0">Role até o fim para liberar a aprovação. Acesso registrado em nome de Validador 1.</p></div>${decision(S.decided.pdf==='Aprovado',`Leia as 3 páginas para liberar a aprovação. Faltam 2.`,'pdf')}</div></div>`}
+function pdfScroll(){const e=$('#pdf'),pgs=e.querySelectorAll('.pg');let n=0;pgs.forEach(p=>{if(e.scrollTop+e.clientHeight>=p.offsetTop+p.offsetHeight-8)n++});n=Math.max(n,1);S.read=Math.max(S.read||0,n);$('#rd').textContent=S.read;$('#pr').style.width=S.read/3*100+'%';if(S.read>=3){$('#lk').textContent='✔ Leitura concluída. Aprovação liberada.';const a=$('#ap');a.disabled=false;a.classList.remove('g');a.textContent='Aprovar'}else $('#lk').textContent='🔒 Leia as 3 páginas para liberar a aprovação. Faltam '+(3-S.read)+'.'}
+const fm=s=>String(Math.floor(s/60)).padStart(2,'0')+':'+String(Math.floor(s%60)).padStart(2,'0');let tm;
+function vidV(){S.pos=S.pos||0;S.max=S.max||0;return vtop('Vídeo promocional, semana 41')+`<div class="vw"><div class="vh"><b>video-campanha-semana-41.mp4</b><span class="mu">Duração 03:30</span><button class="sm" onclick="document.querySelector('.vid').requestFullscreen?.()">Tela cheia</button></div><div class="vid"><button class="pl" id="pb" onclick="vplay()">▶</button></div><div style="padding:16px"><input type="range" id="sk" min="0" max="210" value="${S.pos}" style="padding:0;border:0;accent-color:var(--yl)" oninput="if(+this.value>S.max)this.value=S.max;S.pos=+this.value;vupd()"><div style="display:flex;justify-content:space-between" class="mu"><span id="tc">${fm(S.pos)} / 03:30</span><span>Avanço bloqueado: você só pode voltar</span></div></div><p class="foot" style="padding:0 16px 14px;margin:0">Assista ao vídeo inteiro para liberar a aprovação. Acesso registrado em nome de Validador 1. (Demo: reprodução acelerada.)</p></div>${decision(false,'Assista ao vídeo inteiro para liberar a aprovação. Faltam 3:30.','vid')}</div></div>`}
+function vplay(){clearInterval(tm);const b=$('#pb');if(b.textContent==='⏸'){b.textContent='▶';return}b.textContent='⏸';tm=setInterval(()=>{if(S.v!=='vid'){clearInterval(tm);return}S.pos=Math.min(210,S.pos+5);S.max=Math.max(S.max,S.pos);vupd();if(S.pos>=210){clearInterval(tm);b.textContent='▶'}},250)}
+function vupd(){$('#sk').value=S.pos;$('#tc').textContent=fm(S.pos)+' / 03:30';const f=Math.max(0,210-S.max);if(f<=0){$('#lk').textContent='✔ Vídeo concluído. Aprovação liberada.';const a=$('#ap');a.disabled=false;a.classList.remove('g');a.textContent='Aprovar'}else $('#lk').textContent='🔒 Assista ao vídeo inteiro para liberar a aprovação. Faltam '+Math.floor(f/60)+':'+String(f%60).padStart(2,'0')+'.'}
+const shell=(t,body)=>`<div class="login"><div class="lh"><div class="logo d"><i>✓</i>AVAL</div><h2 class="d">${t}</h2></div><div class="lf">${body}</div></div>`;
+const err=m=>{const e=$('#er');if(e)e.textContent=m};
+const busy=b=>{const x=$('#bt');if(x)x.disabled=!!b};
+const demo=()=>S.demo||S.u==='val'||['rules','recv'].includes(S.v)?'<div class="alert"><span class="tag">Demo</span>Esta tela ainda usa dados de demonstração. Nada aqui é salvo.</div>':'';
+const fd=iso=>{const d=new Date(iso),p=n=>String(n).padStart(2,'0');return p(d.getDate())+'/'+p(d.getMonth()+1)+', '+p(d.getHours())+':'+p(d.getMinutes())};
+const left=d=>{if(d.status==='aprovado')return'CONCLUÍDO';if(d.status==='reprovado')return'REPROVADO';const ms=new Date(d.prazo)-Date.now();if(d.status==='expirado'||ms<=0)return'ENCERRADO';const h=Math.floor(ms/36e5);return Math.floor(h/24)+'D '+String(h%24).padStart(2,'0')+'H'};
+function stepV(t,sub,hint,f,fn,b){return shell(t,`<p>${sub}</p><p class="mu">${hint}</p>${f.map(([i,l])=>`<label class="l">${l}</label><input type="password" id="${i}" autocomplete="new-password" onkeydown="if(event.key==='Enter')${fn}">`).join('')}<button class="btn" style="width:100%;margin:16px 0" id="bt" onclick="${fn}">${b}</button><p class="mu" id="er" style="color:#ff8a8a"></p><p class="mu"><a style="cursor:pointer;text-decoration:underline" onclick="logout()">Cancelar e sair</a></p>`)}
+function loginV(){
+if(S.step==='senha')return stepV('Crie sua senha de acesso','Primeiro acesso: defina uma senha nova para entrar no Aval.','De 12 a 128 caracteres, com letras minúsculas e maiúsculas, números e símbolos.',[['p1','Nova senha de acesso'],['p2','Repita a nova senha']],'doSenha()','Salvar senha de acesso');
+if(S.step==='vsenha')return stepV('Crie sua senha de validação','Ela confirma as suas decisões. Não é a senha de acesso.','Mínimo de 6 caracteres e diferente da senha de acesso.',[['v1','Senha de validação'],['v2','Repita a senha de validação']],'doVSenha()','Salvar e entrar');
+return shell('Validação de documentos',`<label class="l">Usuário</label><input id="lu" autocomplete="username" onkeydown="if(event.key==='Enter')doLogin()"><label class="l">Senha de acesso</label><input type="password" id="lp" autocomplete="current-password" onkeydown="if(event.key==='Enter')doLogin()"><button class="btn" style="width:100%;margin:16px 0" id="bt" onclick="doLogin()">Entrar</button><p class="mu" id="er" style="color:#ff8a8a"></p><p class="mu">Primeiro acesso? Use a senha provisória enviada pelo administrador.</p>${MODO_DEMO?`<div class="mini"><span class="mu" style="width:100%">Demonstração (sem senha, dados de exemplo): entre como</span><button onclick="demoLogin('master')">Admin Master</button><button onclick="demoLogin('juliano')">Juliano (Administrador)</button><button onclick="demoLogin('adm2')">Administrador 2</button><button onclick="demoLogin('val')">Validador 1</button></div>`:''}`)}
+async function doLogin(){const u=$('#lu').value.trim().toLowerCase(),p=$('#lp').value;if(!u||!p)return err('Informe usuário e senha');
+busy(1);const{error}=await sb.auth.signInWithPassword({email:u.includes('@')?u:u+'@aval.com',password:p});busy(0);
+if(error){const m=error.message||'';return err(SUPABASE_KEY.startsWith('COLE_AQUI')?'Falta colocar a chave do Supabase no arquivo (veja o topo do script).':/invalid login/i.test(m)?'Usuário ou senha incorretos.':'Erro: '+m)}
+try{await enter()}catch(e){err('Erro ao carregar o perfil: '+(e.message||e))}}
+async function fnErr(e,d){try{const j=await e.context.json();return j.erro||j.error||j.message||'Não foi possível salvar.'}catch(_){return(d&&(d.erro||d.error))||'Não foi possível concluir. Tente novamente.'}}
+async function doSenha(){const a=$('#p1').value,b=$('#p2').value;
+if(a!==b)return err('As senhas não conferem');
+if(a.length<12||a.length>128||!/[a-z]/.test(a)||!/[A-Z]/.test(a)||!/\d/.test(a)||!/[^A-Za-z0-9]/.test(a))return err('A senha precisa ter de 12 a 128 caracteres, com minúsculas, maiúsculas, números e símbolos.');
+busy(1);const em=(await sb.auth.getUser()).data.user?.email;
+const{data,error}=await sb.functions.invoke('aval-trocar-senha',{body:{nova_senha:a,confirmar_senha:b}});
+if(error||(data&&(data.erro||data.error))){busy(0);return err(await fnErr(error,data))}
+const r=await sb.auth.signInWithPassword({email:em,password:a});busy(0);
+if(r.error){S.step='login';S.u=null;render();return toast('Senha alterada. Entre com a nova senha.')}
+S.pw=a;
+if(['validador','master'].includes(S.me.papel)){S.step='vsenha';S.u=null;render()}else{S.pw=null;await enter()}}
+async function doVSenha(){const a=$('#v1').value,b=$('#v2').value;
+if(a!==b)return err('As senhas não conferem');if(a.length<6)return err('Mínimo de 6 caracteres.');if(a===S.pw)return err('Use uma senha diferente da senha de acesso.');
+busy(1);const{error}=await sb.rpc('definir_senha_validacao',{p_senha:a});busy(0);
+if(error)return err(error.message);S.pw=null;await enter()}
+async function enter(){const{data:{user}}=await sb.auth.getUser();if(!user){S.u=null;S.step='login';return render()}
+const{data:me}=await sb.from('perfis').select('*').eq('id',user.id).maybeSingle();
+if(!me||!me.ativo){await sb.auth.signOut();S.u=null;S.me=null;S.step='login';render();return toast('Acesso não autorizado. Fale com o administrador.')}
+S.me=me;
+if(me.precisa_trocar_senha){S.u=null;S.step='senha';return render()}
+S.u=({admin_master:'master',administrador:'adm'})[me.papel]||'val';
+const R={admin_master:'Admin Master',administrador:'Administrador',validador:'Validador',master:'Master'};
+U[S.u]={n:me.nome,r:R[me.papel],i:me.nome.split(/\s+/).map(x=>x[0]).join('').slice(0,2).toUpperCase()};
+S.v=S.u==='val'?'vlist':'docs';S.tab=S.u==='master'?'all':'mine';S.step='login';
+await load();await loadNew();if(S.u==='val'&&!S.demo)await loadVal();await loadNotifs();realtime();render();checkPush()}
+async function load(){
+if(S.u!=='val'){
+const{data:ds,error}=await sb.from('documentos').select('*,criador:perfis!criado_por(nome),participantes(funcao,decisao)').order('criado_em',{ascending:false});
+if(error)toast('Não foi possível carregar os documentos');
+docs=(ds||[]).map(d=>{const P=d.participantes||[],vs=P.filter(x=>x.funcao==='validador'),ms=P.filter(x=>x.funcao==='master');
+return{uid:d.id,ap:d.auditoria_pdf_path,ape:d.auditoria_pdf_em,dest:d.destino_id,cd:d.concluido_em,p:d.arquivo_path,an:d.arquivo_nome,id:d.codigo,t:d.titulo,o:d.criador?.nome||'—',d:fd(d.prazo),l:left(d),v:vs.filter(x=>x.decisao).length,vt:vs.length,m:ms.filter(x=>x.decisao==='aprovou').length,s:{em_validacao:'val',aprovado:'ok',reprovado:'rep',expirado:'exp'}[d.status]}});
+const{data:us}=await sb.from('perfis').select('*').order('nome');
+const L={admin_master:'ADMIN MASTER',administrador:'ADMINISTRADOR',validador:'VALIDADOR',master:'MASTER'};
+users=(us||[]).map(p=>[p.nome+(p.id===S.me.id?' (você)':'')+(p.ativo?'':' (inativo)'),L[p.papel],'—','—',p.papel==='administrador'?'a':p.papel==='admin_master'?'':'v'])}}
+async function loadNew(){if(S.u==='val')return;const am=S.me.papel==='admin_master',q=(t,c)=>sb.from(t).select(c);
+const[vs,as,rg,rd,rv,ms]=await Promise.all([
+q('perfis','id,nome').eq('papel','validador').eq('ativo',true).order('nome'),
+q('perfis','id,nome').in('papel',['administrador','admin_master']).eq('ativo',true).neq('id',S.me.id).order('nome'),
+q('regras_admin','*').eq('admin_id',S.me.id).maybeSingle(),
+q('regras_destinos','destino_id').eq('admin_id',S.me.id),
+q('regras_validadores','validador_id').eq('admin_id',S.me.id),
+q('perfis','id,nome').eq('papel','master').eq('ativo',true).order('nome')]);
+S.masters=(ms.data||[]);
+const g=r=>r.data||[],R=rg.data,has=(r,k,id)=>g(r).some(x=>x[k]===id);
+S.vals=g(vs).filter(v=>am||!R?.validadores_restritos||has(rv,'validador_id',v.id));
+S.dest=am?g(as):(R?.pode_entregar?g(as).filter(a=>has(rd,'destino_id',a.id)):[]);
+S.vm=am?'opcional':(R?.validacao_master||'opcional')}
+function demoLogin(k){S.demo=true;S.me={id:'demo',papel:'demo'};S.vals=['Paulo','Elizandro','Diego Z.','Adelqui','Helinton'].map((n,i)=>({id:'v'+i,nome:n}));S.dest=['Leonardo','Grasiela','Gabriela','Bianca','Ariel'].filter(n=>!(k==='master'&&n==='Leonardo')).map((n,i)=>({id:'a'+i,nome:n}));S.vm='opcional';S.masters=['Master 1','Master 2'].map((n,i)=>({id:'m'+i,nome:n}));login(k)}
+function addFiles(el){S.files=[...(S.files||[]),...el.files];try{el.value=''}catch(e){}fileList()}
+function fileList(){const F=S.files||[];$('#fl').innerHTML=F.map((f,i)=>`<div class="chk" style="justify-content:space-between;border-bottom:1px solid var(--bd)"><span>${esc(f.name)} <small class="mu" style="display:inline">${(f.size/1048576).toFixed(1)} MB</small></span><button class="link pk" onclick="S.files.splice(${i},1);fileList()">Remover</button></div>`).join('')}
+const EV={pedido_criado:'Pedido criado',leitura_concluida:'Leitura concluída',aprovou:'Aprovou',reprovou:'Reprovou',senha_validacao_incorreta:'Senha de validação incorreta',concluido:'Pedido concluído',expirado:'Prazo expirado',lembrete_24h:'Lembrete: faltam 24 h',lembrete_2h:'Lembrete: faltam 2 h',arquivo_apagado:'Arquivos apagados',pdf_apagado:'PDF de auditoria apagado'};
+async function openDoc(c){const d=docs.find(x=>x.id===c);if(!d)return;S.doc=d;S.dd=null;S.v='doc';render();
+if(S.demo){S.dd={ps:[{funcao:'validador',decisao:'aprovou',perfil:{nome:'Paulo'}},{funcao:'validador',decisao:null,progresso:40,perfil:{nome:'Elizandro'}}],au:[],fs:[]};return render()}
+const[a,b,c2]=await Promise.all([sb.from('participantes').select('funcao,decisao,observacao,progresso,decidido_em,perfil:perfis!usuario_id(nome)').eq('documento_id',d.uid),sb.from('auditoria').select('evento,criado_em').eq('documento_id',d.uid).order('criado_em',{ascending:false}),sb.from('documento_arquivos').select('nome,path,tipo,tamanho,ordem').eq('documento_id',d.uid).order('ordem')]);
+S.dd={ps:a.data||[],au:b.data||[],fs:c2.data||[]};if(S.v==='doc'&&S.doc===d)render()}
+async function openFile(i){const d=S.doc;if(S.demo)return toast('Demonstração: não há arquivo real.');const f=(S.dd?.fs||[])[i],path=f?f.path:d.p;if(!d.p||!path)return toast('O arquivo original já foi apagado.');
+const w=window.open('','_blank');const{data,error}=await sb.storage.from('documentos').createSignedUrl(path,300);
+if(error){if(w)w.close();return toast('Erro: '+error.message)}
+if(w)w.location.href=data.signedUrl;else toast('O navegador bloqueou a nova aba. Libere pop-ups para este site.')}
+async function openAud(c){const d=c?docs.find(x=>x.id===c):S.doc;if(S.demo)return toast('Demonstração: não há PDF real.');const w=window.open('','_blank');const{data,error}=await sb.storage.from('documentos').createSignedUrl(d.ap,300);if(error){if(w)w.close();return toast('Erro: '+error.message)}if(w)w.location.href=data.signedUrl;else toast('O navegador bloqueou a nova aba. Libere pop-ups para este site.')}
+function docV(){const d=S.doc,dd=S.dd,L={validador:'Validador',master:'Master'};
+const ps=dd?(dd.ps.map(p=>`<p><b style="display:inline">${esc(p.perfil?.nome||'—')}</b> <span class="mu">${L[p.funcao]||''}</span> ${p.decisao?`<span class="tag ${p.decisao==='aprovou'?'wh':'rd'}">${p.decisao==='aprovou'?'Aprovou':'Reprovou'}</span> <span class="mu">${fd(p.decidido_em)}</span>`:`<span class="tag gr">Pendente · lido ${Math.round(p.progresso||0)}%</span>`}${p.observacao?`<small class="mu" style="display:block">${esc(p.observacao)}</small>`:''}</p>`).join('')||'<p class="mu">Sem participantes.</p>'):'<p class="mu">Carregando…</p>';
+const hs=dd?(dd.au.map(a=>`<p><span class="mu">${fd(a.criado_em)}</span> · ${esc(EV[a.evento]||a.evento)}</p>`).join('')||'<p class="mu">Sem registros.</p>'):'<p class="mu">Carregando…</p>';
+const TL={pdf:'PDF',excel:'Excel',video:'Vídeo',imagem:'Foto'};
+const fl=!dd?'<p class="mu">Carregando…</p>':(dd.fs.length?dd.fs.map((f,i)=>`<div class="chk" style="justify-content:space-between;border-bottom:1px solid var(--bd)"><span>${esc(f.nome)} <small class="mu" style="display:inline">${TL[f.tipo]||''}${f.tamanho?' · '+(f.tamanho/1048576).toFixed(1)+' MB':''}</small></span><button class="sm r" onclick="openFile(${i})">Abrir</button></div>`).join(''):(d.p?`<div class="chk" style="justify-content:space-between"><span>${esc(d.an||'arquivo')}</span><button class="sm r" onclick="openFile(0)">Abrir</button></div>`:'<p class="mu">O arquivo original já foi apagado.</p>'));
+const aud=d.ap?`<div class="chk" style="justify-content:space-between"><span><b>PDF de auditoria</b> <small class="mu" style="display:inline">quem validou, data e horário</small></span><button class="sm r" onclick="openAud()">Abrir</button></div>`:(['ok','rep','exp'].includes(d.s)?(d.ape?'<p class="foot">O PDF de auditoria já foi apagado (retenção de 30 dias).</p>':'<p class="foot">O PDF de auditoria é gerado automaticamente em poucos minutos.</p>'):'');
+return `<div class="crumb"><a style="cursor:pointer" onclick="go('docs')">Documentos</a> / ${esc(d.id)}</div>`+head(esc(d.t),esc(d.id)+' · enviado por '+esc(d.o)+' · prazo '+esc(d.d)+' · '+esc(d.an||'arquivo apagado'),'')+`<div class="pn" style="margin-bottom:20px"><h2><em>1</em>Arquivos</h2>${fl}${aud}</div><div class="cols"><div class="pn"><h2><em>2</em>Participantes</h2>${ps}</div><div class="pn"><h2><em>3</em>Histórico</h2>${hs}</div></div>`}
+
+/* ===== Validador / Master: dados reais ===== */
+async function loadVal(){const{data,error}=await sb.from('documentos').select('id,codigo,titulo,prazo,status,participantes(funcao,decisao,progresso,leitura_concluida_em),documento_arquivos(nome,path,tipo,tamanho,ordem)').order('prazo');
+if(error)toast('Não foi possível carregar os documentos');
+S.vd=(data||[]).map(d=>({...d,me:(d.participantes||[])[0]||{},fs:(d.documento_arquivos||[]).sort((a,b)=>a.ordem-b.ordem)}))}
+function vbar(){return `<div class="vtop"><div style="display:flex;align-items:center"><div class="logo d" style="margin:0;font-size:26px"><i>✓</i>AVAL</div><a class="y" style="cursor:pointer" onclick="go('vlist')">Meus documentos</a></div><div>${esc(U.val.n)} <span class="av" style="display:inline-grid;vertical-align:middle;margin-left:8px">${U.val.i}</span> <a class="mu" style="cursor:pointer;margin-left:10px" onclick="logout()">Sair</a></div></div>`}
+function vlistR(){const L=S.vd||[];const pend=L.filter(d=>d.status==='em_validacao'&&!d.me.decisao),h=x=>(new Date(x.prazo)-Date.now())/36e5,u2=pend.filter(d=>h(d)<=2).length,u24=pend.filter(d=>h(d)<=24).length;const al=u2?`<p class="foot" style="color:#ff8a8a">⚠ ${u2} pedido(s) vencem em menos de 2 horas.</p>`:u24?`<p class="foot" style="color:#ffd24a">⚠ ${u24} pedido(s) vencem em menos de 24 horas.</p>`:'';return vbar()+`<div class="main" style="max-width:1100px;margin:auto">${head('Meus documentos','Pedidos aguardando a sua decisão')}${al}<div class="tw"><table><tr><th>Documento<th>Prazo<th>Arquivos<th></tr>${L.map(d=>{const m=d.me,st=m.decisao?`<span class="tag ${m.decisao==='aprovou'?'wh':'rd'}">${m.decisao==='aprovou'?'Aprovou':'Reprovou'}</span>`:d.status!=='em_validacao'?'<span class="tag gr">Encerrado</span>':`<button class="sm r" onclick="openVal('${d.id}')">Validar</button>`;return `<tr><td><b>${esc(d.titulo)}</b><small class="mu">${esc(d.codigo)}</small><td>${fd(d.prazo)}<td>${d.fs.length}<td>${st}</tr>`}).join('')||'<tr><td colspan="4" class="mu">Nenhum documento para você.</tr>'}</table></div></div>`}
+function openVal(id){S.vdoc=S.vd.find(x=>x.id===id);S.rd={};S.v='vdoc';render()}
+function vdocV(){const d=S.vdoc,m=d.me,TL={pdf:'PDF',excel:'Excel',video:'Vídeo',imagem:'Foto'},ok=!!m.leitura_concluida_em,dn=!!m.decisao||d.status!=='em_validacao';
+const lk=dn?(m.decisao?'Decisão já registrada: '+(m.decisao==='aprovou'?'Aprovou':'Reprovou'):'Pedido encerrado.'):ok?'✔ Leitura concluída. Aprovação liberada.':'🔒 Abra e leia todos os arquivos para liberar a aprovação.';
+return vbar()+`<div class="main" style="max-width:1200px;margin:auto"><div class="crumb"><a style="cursor:pointer" onclick="go('vlist')">Meus documentos</a> / ${esc(d.codigo)}</div>`+head(esc(d.titulo),'Prazo '+fd(d.prazo)+' · '+d.fs.length+' arquivo(s)')+`<div class="cols" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr)"><div><div class="pn"><h2><em>1</em>Arquivos</h2>${d.fs.map((f,i)=>`<div class="chk" style="justify-content:space-between;border-bottom:1px solid var(--bd)"><span id="fi${i}">${esc(f.nome)} <small class="mu" style="display:inline">${TL[f.tipo]||''}</small></span><button class="sm r" onclick="showFile(${i})">Ver</button></div>`).join('')}</div><div class="vw" id="vw" style="margin-top:16px"></div></div><div class="dec"><h2>Sua decisão</h2><div><label class="l">Observação (obrigatória ao reprovar)</label><textarea id="ob" rows="5" ${dn?'disabled':''}></textarea><label class="l">Senha de validação</label><input type="password" id="pw" autocomplete="off" ${dn?'disabled':''}><small class="mu">Confirma sua decisão. Não é a senha de acesso.</small><div class="lock" id="lk">${lk}</div><div class="dbtn"><button class="btn rep" ${dn?'disabled':''} onclick="decideR(0)">Reprovar</button><button class="btn ${ok&&!dn?'':'g'}" id="ap" ${ok&&!dn?'':'disabled'} onclick="decideR(1)">Aprovar</button></div><p class="foot">Depois de enviada, a decisão não pode ser alterada.</p></div></div></div></div>`}
+function loadXlsx(){return window.XLSX?Promise.resolve():new Promise((ok,no)=>{const e=document.createElement('script');e.src='https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';e.onload=ok;e.onerror=no;document.head.appendChild(e)})}
+function loadPdfJs(){const B='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';return window.pdfjsLib?Promise.resolve():new Promise((ok,no)=>{const e=document.createElement('script');e.src=B+'pdf.min.js';e.onload=()=>{pdfjsLib.GlobalWorkerOptions.workerSrc=B+'pdf.worker.min.js';ok()};e.onerror=no;document.head.appendChild(e)})}
+async function showFile(i){const f=S.vdoc.fs[i],box=$('#vw'),B=sb.storage.from('documentos');box.innerHTML='<p class="mu" style="padding:16px">Carregando…</p>';
+const a=await B.createSignedUrl(f.path,900);if(a.error)return box.innerHTML='<p class="mu" style="padding:16px">Erro: '+esc(a.error.message)+'</p>';const u=a.data.signedUrl;
+const dl=f.tipo==='video'?'':`<p class="foot" style="padding:10px 16px"><a class="y" id="dl" style="cursor:pointer">Baixar arquivo</a></p>`;
+try{
+if(f.tipo==='video'){box.innerHTML=`<video id="vp" src="${u}" controls controlsList="nodownload noplaybackrate" disablePictureInPicture oncontextmenu="return false" style="width:100%;display:block"></video><p class="foot" style="padding:10px 16px">Você só pode voltar; avançar é bloqueado. O download não é oferecido.</p>`;const v=$('#vp');let mx=0;v.ontimeupdate=()=>{if(!v.seeking&&v.currentTime>mx&&v.currentTime-mx<2)mx=v.currentTime;if(v.duration&&v.currentTime>=v.duration-.5)fileDone(i)};v.onseeking=()=>{if(v.currentTime>mx+.5)v.currentTime=mx};v.onended=()=>fileDone(i)}
+else if(f.tipo==='imagem'){box.innerHTML=`<img src="${u}" style="max-width:100%;display:block;margin:auto" onload="fileDone(${i})">`+dl}
+else if(f.tipo==='excel'){await loadXlsx();const wb=XLSX.read(await(await fetch(u)).arrayBuffer(),{type:'array'}),seen={},N=wb.SheetNames;
+box.innerHTML=`<div style="padding:8px 16px">${N.map((n,k)=>`<button class="sm" data-k="${k}">${esc(n)}</button>`).join(' ')}</div><div id="xv" style="max-height:70vh;overflow:auto;background:#fff;color:#111;padding:8px"></div><p class="foot" style="padding:10px 16px">Abra cada aba e role até o fim. Não é preciso baixar.</p>`+dl;const xv=$('#xv');let cur=0;
+const ck=()=>{if(xv.scrollTop+xv.clientHeight>=xv.scrollHeight-20){seen[cur]=1;if(N.every((_,k)=>seen[k]))fileDone(i)}};
+const show=k=>{cur=k;xv.innerHTML=XLSX.utils.sheet_to_html(wb.Sheets[N[k]],{header:'',footer:''});xv.querySelectorAll('td').forEach(td=>td.style.cssText='border:1px solid #ccc;padding:2px 6px;font-size:12px');xv.scrollTop=0;ck()};
+box.querySelectorAll('[data-k]').forEach(b=>b.onclick=()=>show(+b.dataset.k));xv.onscroll=ck;show(0)}
+else{await loadPdfJs();const pdf=await pdfjsLib.getDocument(u).promise;box.innerHTML='<div id="pv" style="max-height:70vh;overflow:auto;background:#222;padding:8px"></div>'+dl;const pv=$('#pv');
+for(let n=1;n<=pdf.numPages;n++){const pg=await pdf.getPage(n),vp=pg.getViewport({scale:1.4}),c=document.createElement('canvas');c.width=vp.width;c.height=vp.height;c.style.cssText='max-width:100%;display:block;margin:0 auto 8px';pv.appendChild(c);await pg.render({canvasContext:c.getContext('2d'),viewport:vp}).promise}
+const se=document.createElement('div');se.style.height='2px';pv.appendChild(se);new IntersectionObserver(es=>{if(es.some(x=>x.isIntersecting))fileDone(i)},{root:pv}).observe(se);
+const ck=()=>{if(pv.scrollTop+pv.clientHeight>=pv.scrollHeight-40)fileDone(i)};pv.onscroll=ck;ck()}
+box.insertAdjacentHTML('beforeend','<p class="foot" id="fh" style="padding:0 16px 12px">'+(S.rd[i]?'✔ Leitura deste arquivo concluída.':{pdf:'Role até o fim do PDF para concluir a leitura.',video:'Assista ao vídeo até o final para concluir a leitura.',excel:'Abra cada aba e role até o fim.',imagem:''}[f.tipo])+'</p>');
+const b=$('#dl');if(b)b.onclick=async()=>{const r=await B.createSignedUrl(f.path,300,{download:f.nome});if(r.error)return toast('Erro: '+r.error.message);location.href=r.data.signedUrl}
+}catch(e){box.innerHTML='<p class="mu" style="padding:16px">Não foi possível exibir o arquivo: '+esc(e.message||e)+'</p>'}}
+async function fileDone(i){const d=S.vdoc;S.rp=S.rp||{};if(d.me.decisao||d.status!=='em_validacao'||S.rd[i]||S.rp[i])return;S.rp[i]=1;
+const n=Object.keys(S.rd).length+1,all=n>=d.fs.length;
+const{error}=await sb.rpc('registrar_leitura',{p_doc:d.id,p_progresso:Math.round(n/d.fs.length*100)});S.rp[i]=0;
+if(error){const l=$('#lk');if(l)l.textContent='Não foi possível registrar a leitura: '+error.message+' (volte um pouco e role/assista de novo para tentar outra vez)';return toast('Erro ao registrar leitura: '+error.message)}
+S.rd[i]=1;const el=$('#fi'+i);if(el)el.insertBefore(document.createTextNode('✔ '),el.firstChild);const h=$('#fh');if(h)h.textContent='✔ Leitura deste arquivo concluída.';
+if(all){d.me.leitura_concluida_em=new Date().toISOString();const a=$('#ap');a.disabled=false;a.classList.remove('g');$('#lk').textContent='✔ Leitura concluída. Aprovação liberada.'}else $('#lk').textContent='🔒 Faltam '+(d.fs.length-n)+' arquivo(s) para liberar a aprovação.'}
+async function decideR(a){const d=S.vdoc,pw=$('#pw').value,ob=$('#ob').value.trim();
+if(!pw)return toast('Digite a senha de validação');if(!a&&!ob)return toast('Escreva a observação para reprovar');
+const{data,error}=await sb.rpc('decidir_documento',{p_doc:d.id,p_decisao:a?'aprovou':'reprovou',p_obs:ob||null,p_senha:pw});
+if(error)return toast('Erro: '+error.message);
+if(data==='senha_incorreta')return toast('Senha de validação incorreta.');
+if(data==='bloqueado')return toast('Muitas tentativas. Tente de novo em 15 minutos.');
+toast('Decisão registrada: '+(a?'Aprovado':'Reprovado'));await loadVal();S.v='vlist';render()}
+let rt=null,rtT=0;
+const NI={nova:'📄',lembrete:'⏰',critico:'🚨'};
+function renderBell(){let b=document.getElementById('bellbox');if(!b){b=document.createElement('div');b.id='bellbox';document.body.appendChild(b)}
+if(!S.u||S.demo){b.innerHTML='';return}const L=S.nt||[],n=L.filter(x=>!x.lida_em).length,perm=('Notification' in window)?Notification.permission:'denied';
+b.innerHTML=`<div style="position:fixed;top:12px;right:16px;z-index:60"><button class="sm" onclick="S.np=!S.np;renderBell()">🔔${n?` <b style="background:#e5484d;color:#fff;border-radius:9px;padding:0 6px">${n}</b>`:''}</button>${S.np?`<div style="position:absolute;right:0;top:38px;width:340px;max-width:92vw;max-height:60vh;overflow:auto;background:#1b1e26;color:#eee;border:1px solid #333;border-radius:10px;padding:8px"><div style="display:flex;justify-content:space-between;gap:8px;padding:4px 6px"><b>Notificações</b>${n?`<a style="cursor:pointer;text-decoration:underline" onclick="readAllNt()">Marcar todas como lidas</a>`:''}</div>${pushUi()}${L.map(x=>`<div onclick="openNt(${x.id})" style="cursor:pointer;padding:8px 6px;border-top:1px solid #333;${x.lida_em?'opacity:.55':''}"><b>${NI[x.tipo]||''} ${esc(x.titulo)}</b><small style="display:block">${esc(x.mensagem)}</small><small style="opacity:.7">${fd(x.criado_em)}</small></div>`).join('')||'<p style="padding:8px 6px;margin:0;opacity:.7">Nenhuma notificação.</p>'}</div>`:''}</div>`}
+async function loadNotifs(){if(S.demo||!S.u)return;const{data}=await sb.from('notificacoes').select('*').order('criado_em',{ascending:false}).limit(50);const old=new Set((S.nt||[]).map(x=>x.id));S.nt=data||[];if(S.ntInit)S.nt.filter(x=>!old.has(x.id)&&!x.lida_em).forEach(alertNt);S.ntInit=1;renderBell()}
+function alertNt(x){toast(NI[x.tipo]+' '+x.titulo+': '+x.mensagem);try{if(S.push!=='on'&&'Notification' in window&&Notification.permission==='granted')new Notification(x.titulo,{body:x.mensagem})}catch(_){}}
+async function readAllNt(){await sb.from('notificacoes').update({lida_em:new Date().toISOString()}).is('lida_em',null);await loadNotifs()}
+async function openNt(id){const x=(S.nt||[]).find(y=>y.id===id);if(!x)return;if(!x.lida_em){await sb.from('notificacoes').update({lida_em:new Date().toISOString()}).eq('id',id);x.lida_em=new Date().toISOString()}S.np=false;renderBell();
+if(S.u==='val'){const d=(S.vd||[]).find(y=>y.id===x.documento_id);if(d&&d.status==='em_validacao'&&!d.me.decisao)openVal(d.id)}}
+function realtime(){if(S.demo||rt)return;const f=()=>{clearTimeout(rtT);rtT=setTimeout(bump,800)};rt=sb.channel('aval').on('postgres_changes',{event:'*',schema:'public',table:'documentos'},f).on('postgres_changes',{event:'*',schema:'public',table:'participantes'},f).on('postgres_changes',{event:'*',schema:'public',table:'notificacoes'},()=>loadNotifs()).subscribe()}
+async function bump(){if(!S.u||S.demo)return;if(S.u==='val'){await loadVal();if(S.v==='vlist')render()}else{await load();if(['docs','users','recv'].includes(S.v))render(true);else if(S.v==='doc'&&S.doc)openDoc(S.doc.id)}}
+async function logout(){if(rt){try{await sb.removeChannel(rt)}catch(_){}rt=null}if(S.demo)return location.reload();await unlinkPush();S.push=undefined;await sb.auth.signOut();S.u=null;S.me=null;S.step='login';render();S.nt=[];S.ntInit=0;S.np=false;renderBell()}
+function render(keep){const r=$('#root');let x;
+if(!S.u)x=loginV();
+else if(S.u==='val'&&!S.demo){x=S.v==='vdoc'?vdocV():vlistR()}
+else if(S.u==='val'){x=S.v==='pdf'?pdfV():S.v==='vid'?vidV():`${vtop('Meus documentos').replace(/<div class="cols[\s\S]*$/,'')}</div>`.replace(/<div class="main"[\s\S]*$/,'')+vlist()}
+else{const m={doc:docV,docs:docsV,users:usersV,rules:rulesV,new:newV,recv:recvV,aud:()=>head('Auditoria','Registro de acessos e decisões')+'<p class="mu">Os PDFs de auditoria ficam disponíveis por 30 dias após a conclusão.</p>',cfg:()=>head('Configurações','Prazos, lembretes e retenção')+'<p class="mu">Lembretes e tempo crítico são definidos em cada documento. Retenção: 30 dias (arquivos, PDF e histórico).</p>'};x=`<div class="app">${nav()}<main class="main">${demo()}${(m[S.v]||docsV)()}</main></div>`}
+const f=keep&&document.activeElement.id==='q';r.innerHTML=x+(S.toast?`<div class="toast">${S.toast}</div>`:'');if(f){const q=$('#q');q.focus();q.setSelectionRange(q.value.length,q.value.length)}}
+setInterval(async()=>{if(S.u&&!S.demo&&!document.hidden&&['docs','users'].includes(S.v)){await load();render(true)}},20000);
+setInterval(()=>{if(S.u&&!S.demo&&!document.hidden)loadNotifs()},30000);
+// ===== AVISOS PUSH (celular e desktop) =====
+function b64u(s){const p='='.repeat((4-s.length%4)%4),r=atob((s+p).replace(/-/g,'+').replace(/_/g,'/'));return Uint8Array.from(r,c=>c.charCodeAt(0))}
+async function pushSub(){try{const reg=await navigator.serviceWorker.getRegistration();return reg?await reg.pushManager.getSubscription():null}catch(_){return null}}
+async function linkPush(sub){const j=sub.toJSON();const{error}=await sb.rpc('registrar_push',{p_endpoint:j.endpoint,p_p256dh:j.keys.p256dh,p_auth:j.keys.auth,p_agente:navigator.userAgent.slice(0,200)});if(error)throw error}
+async function unlinkPush(){try{const sub=await pushSub();if(sub)await sb.rpc('remover_push',{p_endpoint:sub.endpoint})}catch(_){}}
+async function checkPush(){
+const ios=/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==='MacIntel'&&navigator.maxTouchPoints>1);
+const standalone=navigator.standalone===true||matchMedia('(display-mode: standalone)').matches;
+if(!('serviceWorker' in navigator)||!('PushManager' in window)||!('Notification' in window)){S.push=ios&&!standalone?'ios':'nao';return renderBell()}
+if(Notification.permission==='denied'){S.push='negado';return renderBell()}
+S.push='off';
+if(Notification.permission==='granted'){const sub=await pushSub();if(sub){try{await linkPush(sub);S.push='on'}catch(_){}}}
+renderBell()}
+async function ativarPush(){try{
+const perm=await Notification.requestPermission();
+if(perm!=='granted'){S.push=perm==='denied'?'negado':'off';return renderBell()}
+const reg=await navigator.serviceWorker.ready;
+let sub=await reg.pushManager.getSubscription();
+if(!sub)sub=await reg.pushManager.subscribe({userVisibleOnly:true,applicationServerKey:b64u(VAPID_PUBLIC)});
+await linkPush(sub);S.push='on';toast('Avisos ativados neste aparelho')
+}catch(e){toast('Não foi possível ativar os avisos: '+(e.message||e))}
+renderBell()}
+async function desativarPush(){try{const sub=await pushSub();if(sub){await sb.rpc('remover_push',{p_endpoint:sub.endpoint});await sub.unsubscribe()}S.push='off';toast('Avisos desativados neste aparelho')}catch(e){toast('Erro ao desativar: '+(e.message||e))}renderBell()}
+function pushUi(){const p='padding:4px 6px;margin:0',a='cursor:pointer;text-decoration:underline',st=S.push;
+if(st==='ios')return `<p style="${p}">📱 No iPhone: toque em <b>Compartilhar</b> › <b>Adicionar à Tela de Início</b>, abra o Aval pelo ícone criado e ative os avisos aqui.</p>`;
+if(st==='nao')return `<p style="${p};opacity:.7">Este navegador não aceita avisos push.</p>`;
+if(st==='negado')return `<p style="${p}">Avisos bloqueados. Libere as notificações deste site nas configurações do navegador/aparelho.</p>`;
+if(st==='on')return `<p style="${p}">✅ Avisos ativos neste aparelho · <a style="${a}" onclick="desativarPush()">desativar</a></p>`;
+return `<p style="${p}"><a style="${a}" onclick="ativarPush()">🔔 Ativar avisos neste aparelho</a></p>`}
+if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});
+sb.auth.getSession().then(({data})=>data.session?enter():render());
+</script></body></html>
