@@ -235,20 +235,36 @@ return `<div class="crumb">Documentos / Novo documento</div>`+head('Novo documen
 const TIPOS={pdf:['pdf'],excel:['xls','xlsx','xlsm','csv'],video:['mp4','mov','webm','m4v'],imagem:['jpg','jpeg','png']};
 const tipoDe=ext=>Object.keys(TIPOS).find(k=>TIPOS[k].includes(ext))||null;
 async function openEdit(c){const d=docs.find(x=>x.id===c);if(!d)return;if(S.demo)return toast('Demonstração: edição indisponível.');
-try{const[a,b,p]=await Promise.all([sb.from('documentos').select('titulo,prazo,status,escalado_master_em').eq('id',d.uid).single(),sb.from('documento_arquivos').select('id,nome,tipo,tamanho,ordem').eq('documento_id',d.uid).order('ordem'),sb.from('participantes').select('decisao').eq('documento_id',d.uid)]);
-if(a.error)throw a.error;
-if(a.data.status!=='em_validacao'||a.data.escalado_master_em||(p.data||[]).some(x=>x.decisao)){await load();render(true);return toast('Este pedido não pode mais ser editado: alguém já decidiu ou o prazo venceu.')}
-const fs=b.data||[];S.files=[];S.ed={d,t:a.data.titulo,prazo:a.data.prazo,fs,rem:new Set(),leg:!fs.length&&!!d.p};S.v='edit';render()}catch(e){toast('Erro: '+(e.message||e))}}
+try{const[a,b,p]=await Promise.all([sb.from('documentos').select('titulo,prazo,status,escalado_master_em,criado_por').eq('id',d.uid).single(),sb.from('documento_arquivos').select('id,nome,tipo,tamanho,ordem').eq('documento_id',d.uid).order('ordem'),sb.from('participantes').select('usuario_id,funcao,decisao,perfil:perfis!usuario_id(nome)').eq('documento_id',d.uid)]);
+if(a.error)throw a.error;if(p.error)throw p.error;
+const P=p.data||[];
+if(a.data.status!=='em_validacao'||a.data.escalado_master_em||P.some(x=>x.decisao)){await load();render(true);return toast('Este pedido não pode mais ser editado: alguém já decidiu ou o prazo venceu.')}
+let vals=S.vals||[],vm=S.vm||'opcional';
+if(S.me.papel==='admin_master'&&a.data.criado_por!==S.me.id){try{const{data:R}=await sb.rpc('obter_regras',{p_admin:a.data.criado_por});if(R){vm=R.validacao_master||'opcional';if(R.validadores_restritos)vals=vals.filter(v=>(R.validadores||[]).includes(v.id))}}catch(_){}}
+const add=(L,f)=>{const ids=new Set(L.map(x=>x.id));P.filter(x=>x.funcao===f&&!ids.has(x.usuario_id)).forEach(x=>{L=[...L,{id:x.usuario_id,nome:x.perfil?.nome||'—'}]});return L};
+const fs=b.data||[];S.files=[];
+S.ed={d,t:a.data.titulo,prazo:a.data.prazo,fs,rem:new Set(),leg:!fs.length&&!!d.p,vm,vl:add(vals,'validador'),ml:add(S.masters||[],'master'),cv:new Set(P.filter(x=>x.funcao==='validador').map(x=>x.usuario_id)),cm:new Set(P.filter(x=>x.funcao==='master').map(x=>x.usuario_id))};
+S.v='edit';render()}catch(e){toast('Erro: '+(e.message||e))}}
 function edFiles(){const E=S.ed,TL={pdf:'PDF',excel:'Excel',video:'Vídeo',imagem:'Foto'};
 if(E.leg)return `<div class="chk" style="justify-content:space-between;border-bottom:1px solid var(--bd)"><span>${esc(E.d.an||'arquivo')}</span></div>`;
 return E.fs.map(f=>{const r=E.rem.has(String(f.id));return `<div class="chk" style="justify-content:space-between;border-bottom:1px solid var(--bd);${r?'opacity:.5;text-decoration:line-through':''}"><span>${esc(f.nome)} <small class="mu" style="display:inline">${TL[f.tipo]||''}${f.tamanho?' · '+(f.tamanho/1048576).toFixed(1)+' MB':''}</small></span><button class="link ${r?'y':'pk'}" onclick="edToggle('${f.id}')">${r?'Desfazer':'Remover'}</button></div>`}).join('')||'<p class="mu">Nenhum arquivo atual.</p>'}
 function edToggle(id){const r=S.ed.rem;r.has(id)?r.delete(id):r.add(id);$('#el').innerHTML=edFiles()}
 function editV(){const E=S.ed;if(!E)return docsV();const p=new Date(E.prazo),z=n=>String(n).padStart(2,'0');
 const dv=p.getFullYear()+'-'+z(p.getMonth()+1)+'-'+z(p.getDate()),hv=z(p.getHours())+':'+z(p.getMinutes());
-return `<div class="crumb"><a style="cursor:pointer" onclick="S.ed=null;go('docs')">Documentos</a> / ${esc(E.d.id)} / Editar</div>`+head('Editar pedido',esc(E.d.id)+' · só é possível editar enquanto ninguém decidiu')+`<div class="pn" style="max-width:760px"><h2><em>1</em>Arquivos</h2><div id="el">${edFiles()}</div><label class="drop" style="display:block;margin-top:12px" ondragover="event.preventDefault()" ondrop="event.preventDefault();addFiles(event.dataTransfer)"><input type="file" hidden multiple accept=".pdf,.xls,.xlsx,.xlsm,.csv,.mp4,.mov,.webm,.m4v,.jpg,.jpeg,.png" onchange="addFiles(this)"><b>Arraste para incluir mais arquivos ou clique para escolher</b><small>PDF, Excel, vídeo ou foto (JPG, PNG)</small></label><div id="fl"></div><h2 style="margin-top:26px"><em>2</em>Identificação e prazo</h2><label class="l">Título</label><input id="et" value="${esc(E.t)}"><div class="row2"><div><label class="l">Data limite</label><input type="date" id="ed" value="${dv}"></div><div><label class="l">Horário</label><input type="time" id="eh" value="${hv}"></div></div><p class="foot">Se os arquivos mudarem, quem já começou a ler precisará ler de novo. Todos os participantes são avisados da alteração.</p><div class="acts"><button class="btn g" onclick="S.ed=null;go('docs')">Cancelar</button><button class="btn" id="se" onclick="saveEdit()">Salvar alterações</button></div></div>`}
+const chk=(cls,L,sel,dis)=>L.map(v=>`<label class="chk"><input type="checkbox" class="${cls}" value="${v.id}" ${sel.has(v.id)?'checked':''} ${dis?'disabled':''}>${esc(v.nome)}</label>`).join('')||'<p class="mu">Nenhum disponível.</p>';
+const nota={obrigatoria:'Validação Master obrigatória para este administrador.',dispensada:'Validação Master dispensada para este administrador.',opcional:'Validação Master opcional.'}[E.vm]||'';
+return `<div class="crumb"><a style="cursor:pointer" onclick="S.ed=null;go('docs')">Documentos</a> / ${esc(E.d.id)} / Editar</div>`+head('Editar pedido',esc(E.d.id)+' · só é possível editar enquanto ninguém decidiu')+`<div class="pn" style="max-width:760px"><h2><em>1</em>Arquivos</h2><div id="el">${edFiles()}</div><label class="drop" style="display:block;margin-top:12px" ondragover="event.preventDefault()" ondrop="event.preventDefault();addFiles(event.dataTransfer)"><input type="file" hidden multiple accept=".pdf,.xls,.xlsx,.xlsm,.csv,.mp4,.mov,.webm,.m4v,.jpg,.jpeg,.png" onchange="addFiles(this)"><b>Arraste para incluir mais arquivos ou clique para escolher</b><small>PDF, Excel, vídeo ou foto (JPG, PNG)</small></label><div id="fl"></div><h2 style="margin-top:26px"><em>2</em>Identificação e prazo</h2><label class="l">Título</label><input id="et" value="${esc(E.t)}"><div class="row2"><div><label class="l">Data limite</label><input type="date" id="ed" value="${dv}"></div><div><label class="l">Horário</label><input type="time" id="eh" value="${hv}"></div></div><h2 style="margin-top:26px"><em>3</em>Participantes</h2><label class="l" style="margin-top:0">Validadores</label>${chk('ev',E.vl,E.cv,false)}<hr style="border:0;border-top:1px solid var(--bd)"><label class="l">Masters</label>${chk('em',E.ml,E.cm,E.vm==='dispensada')}<small class="mu">${nota} Quem for retirado deixa de ver o pedido; quem for incluído é avisado.</small><p class="foot">Se os arquivos mudarem, quem já começou a ler precisará ler de novo. Todos os participantes são avisados da alteração.</p><div class="acts"><button class="btn g" onclick="S.ed=null;go('docs')">Cancelar</button><button class="btn" id="se" onclick="saveEdit()">Salvar alterações</button></div></div><div class="pn" style="max-width:760px;margin-top:20px"><h2>Excluir pedido</h2><p class="mu">Apaga o pedido, os arquivos e o histórico. Não pode ser desfeito e só é possível enquanto ninguém decidiu.</p><button class="btn rep" id="sx" onclick="deleteEdit()">Excluir pedido</button></div>`}
+async function deleteEdit(){const E=S.ed;if(!E)return;if(!confirm('Excluir o pedido '+E.d.id+' ('+E.d.t+')? Os arquivos e o histórico serão apagados e isso não pode ser desfeito.'))return;
+const bt=$('#sx');bt.disabled=true;
+try{const{data,error}=await sb.rpc('excluir_pedido',{p_doc:E.d.uid});if(error)throw error;
+if((data||[]).length)try{await sb.storage.from('documentos').remove(data)}catch(_){}
+S.files=[];S.ed=null;await load();S.v='docs';render();toast('Pedido excluído')}catch(e){bt.disabled=false;toast('Erro: '+(e.message||e))}}
 async function saveEdit(){const E=S.ed;if(!E)return;const t=$('#et').value.trim(),d=$('#ed').value,h=$('#eh').value||'18:00';
 if(!t)return toast('Informe o título do documento');if(!d)return toast('Informe a data limite');
 const prazo=new Date(d+'T'+h);if(!(prazo>new Date()))return toast('A data limite precisa ser no futuro');
+const vs=[...document.querySelectorAll('.ev:checked')].map(x=>x.value),ms=[...document.querySelectorAll('.em:checked')].map(x=>x.value);
+if(E.vm==='obrigatoria'&&!ms.length)return toast('Escolha ao menos um Master (obrigatório neste perfil)');
+if(!vs.length&&!ms.length)return toast('Escolha ao menos um validador ou um Master');
 const novos=S.files||[],total=(E.leg?1:E.fs.length)-E.rem.size+novos.length;
 if(total<1)return toast('O pedido precisa ter ao menos um arquivo');if(total>20)return toast('No máximo 20 arquivos por pedido.');
 const info=novos.map(f=>{const ext=(f.name.split('.').pop()||'').toLowerCase().replace(/[^a-z0-9]/g,'');return{f,ext,tipo:tipoDe(ext)}});
@@ -261,7 +277,7 @@ const path=S.me.id+'/'+crypto.randomUUID()+'.'+ext;
 const up=await sb.storage.from('documentos').upload(path,f,{contentType:f.type||undefined});
 if(up.error)throw up.error;subidos.push(path);arqs.push({path,nome:f.name,hash,tipo,tamanho:f.size})}
 bt.textContent='Salvando…';
-const{data,error}=await sb.rpc('editar_pedido',{p_doc:E.d.uid,p_titulo:t,p_prazo:prazo.toISOString(),p_novos:arqs,p_remover:[...E.rem]});
+const{data,error}=await sb.rpc('editar_pedido',{p_doc:E.d.uid,p_titulo:t,p_prazo:prazo.toISOString(),p_novos:arqs,p_remover:[...E.rem],p_validadores:vs,p_masters:ms});
 if(error)throw error;
 if((data||[]).length)try{await sb.storage.from('documentos').remove(data)}catch(_){}
 S.files=[];S.ed=null;await load();S.v='docs';render();toast('Pedido atualizado')}
